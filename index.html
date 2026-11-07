@@ -219,8 +219,8 @@ function rowsOf(ws){
   return XLSX.utils.sheet_to_json(ws, {header: 1, raw: true, defval: null, blankrows: true, range: ref});
 }
 const toISO = v => {
-  if (v instanceof Date) return new Date(Date.UTC(v.getFullYear(), v.getMonth(), v.getDate(), 12)).toISOString().slice(0, 10);
-  if (typeof v === 'number' && v > 30000 && v < 80000) { const d = new Date(Math.round((v - 25569) * 864e5)); return d.toISOString().slice(0, 10); }
+  if (v instanceof Date) { const d = new Date(v.getTime() + 12 * 36e5); return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), 12)).toISOString().slice(0, 10); }
+  if (typeof v === 'number' && v > 30000 && v < 80000) { const d = new Date(Math.round(v - 25569) * 864e5); return d.toISOString().slice(0, 10); }
   return null;
 };
 function findSheet(wb, name){ const k = wb.SheetNames.find(s => s.trim().toLowerCase() === name.toLowerCase()); return k ? wb.Sheets[k] : null; }
@@ -290,7 +290,7 @@ async function handleFile(f){
   try {
     if (typeof XLSX === 'undefined') throw new Error('โหลดตัวอ่าน Excel ไม่สำเร็จ ตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่');
     const buf = await f.arrayBuffer();
-    const wb = XLSX.read(buf, {type: 'array', cellDates: true});
+    const wb = XLSX.read(buf, {type: 'array', cellDates: false});
     const sum = findSheet(wb, 'Compare Summary');
     if (!sum) throw new Error('ไม่พบชีท "Compare Summary" ในไฟล์นี้');
     const summary = parseSummary(sum);
