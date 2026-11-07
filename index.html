@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aging Dashboard สาขาพิษณุโลก (ST11)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Kanit:wght@500;600&display=swap">
+<style>
+:root{--ink:#1f2a3c;--soft:#5b6578;--line:#e4e0d8;--bg:#f7f5f0;--card:#ffffff;--good:#2e7d4f;--bad:#b5432b;
+--t1:#3E6A9A;--t2:#2F8580;--t3:#7B62A3;--t4:#A8763E;--t5:#5F8A5B}
+@media (prefers-color-scheme: dark){:root{--ink:#eef0f4;--soft:#b5bccb;--line:#30343c;--bg:#15181d;--card:#1d2128;--good:#6fcf97;--bad:#ff8a70}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans Thai',Tahoma,sans-serif;line-height:1.55;font-size:15px}
+.wrap{max-width:1240px;margin:0 auto;padding:20px 18px 48px;display:flex;flex-direction:column;gap:18px}
+header.top{border-radius:16px;padding:20px 22px;color:#fff;background:linear-gradient(120deg,#26425f,#3E6A9A 50%,#6a5a94);display:flex;flex-direction:column;gap:12px}
+header.top h1{font-family:Kanit,sans-serif;font-weight:600;font-size:clamp(22px,3vw,32px);margin:0;line-height:1.2}
+header.top p{margin:0;color:#e3e9f3}
+.ctl{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn,select,input[type=search]{font:inherit;font-size:14px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 12px}
+.btn{cursor:pointer}
+header .btn{background:#fff;color:#26425f;border:0;font-weight:600}
+header .btn.ghost{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4);font-weight:500}
+header select{background:rgba(255,255,255,.95);border:0}
+.msg{font-size:14px;padding:10px 14px;border-radius:10px;background:var(--card);border:1px solid var(--line)}
+.msg.err{border-color:var(--bad);color:var(--bad)}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid var(--line)}
+.tab{font:inherit;background:none;border:0;border-bottom:3px solid transparent;padding:9px 14px;color:var(--soft);cursor:pointer;border-radius:9px 9px 0 0}
+.tab[aria-selected=true]{color:var(--ink);font-weight:600;border-bottom-color:var(--acc);background:color-mix(in srgb,var(--acc) 16%,transparent)}
+.tab:hover{background:color-mix(in srgb,var(--acc) 8%,transparent)}
+[data-c=t1]{--acc:var(--t1)}[data-c=t2]{--acc:var(--t2)}[data-c=t3]{--acc:var(--t3)}[data-c=t4]{--acc:var(--t4)}[data-c=t5]{--acc:var(--t5)}
+.pg{display:flex;flex-direction:column;gap:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:16px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr));gap:14px}
+.card{background:linear-gradient(170deg,color-mix(in srgb,var(--acc) 10%,var(--card)),var(--card) 65%);border:1px solid var(--line);border-top:3px solid var(--acc);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card h2{margin:0;font-size:17px;font-weight:600;color:color-mix(in srgb,var(--acc) 65%,var(--ink))}
+.note{margin:0;font-size:13px;color:var(--soft)}
+.tile{border-radius:14px;padding:16px 18px;color:var(--ink);border:1px solid var(--line)}
+.tile:nth-child(1){background:linear-gradient(135deg,color-mix(in srgb,var(--acc) 42%,var(--card)),color-mix(in srgb,var(--acc) 24%,var(--card)))}
+.tile:nth-child(2){background:linear-gradient(135deg,color-mix(in srgb,var(--acc) 30%,var(--card)),color-mix(in srgb,var(--acc) 16%,var(--card)))}
+.tile:nth-child(3){background:linear-gradient(135deg,color-mix(in srgb,var(--acc) 20%,var(--card)),color-mix(in srgb,var(--acc) 9%,var(--card)))}
+.tile:nth-child(4){background:linear-gradient(135deg,color-mix(in srgb,var(--acc) 12%,var(--card)),color-mix(in srgb,var(--acc) 4%,var(--card)))}
+.tile .l{margin:0;font-size:13px}.tile .v{margin:2px 0 0;font-family:Kanit,sans-serif;font-size:30px;font-weight:500;line-height:1.2}.tile .d{margin:4px 0 0;font-size:13px}
+.good{color:var(--good)}.bad{color:var(--bad)}.muted{color:var(--soft)}.hot{font-weight:600}
+.chart{position:relative;width:100%}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--soft)}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.tip{position:absolute;pointer-events:none;background:var(--card);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.12);padding:6px 10px;font-size:12px;white-space:nowrap;z-index:3}
+.tip .h{color:var(--soft)}
+table.t{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+table.t th{text-align:left;font-weight:600;padding:7px 9px;border-bottom:1px solid var(--line);position:sticky;top:0;background:color-mix(in srgb,var(--acc) 16%,var(--card));cursor:default}
+table.t th.s{cursor:pointer}
+table.t td{padding:6px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tbody tr:nth-child(even){background:color-mix(in srgb,var(--acc) 5%,transparent)}
+.r{text-align:right}
+.scroll{max-height:30rem;overflow:auto}
+.empty{padding:40px 20px;text-align:center;color:var(--soft);display:flex;flex-direction:column;gap:12px;align-items:center}
+.empty .btn{background:var(--t1);color:#fff;border:0}
+details{font-size:13px;color:var(--soft)}
+[hidden]{display:none !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Aging Dashboard สาขาพิษณุโลก (ST11)</h1>
+    <p id="lead">อัปโหลดไฟล์ Aging Weekly (.xlsm หรือ .xlsx) เพื่อเริ่มวิเคราะห์</p>
+    <div class="ctl">
+      <label class="btn" for="file">อัปโหลดไฟล์สัปดาห์ใหม่</label>
+      <input id="file" type="file" accept=".xlsm,.xlsx,.xls" hidden>
+      <span>สัปดาห์:</span>
+      <select id="week" aria-label="เลือกสัปดาห์"></select>
+      <button class="btn ghost" id="del">ลบสัปดาห์นี้</button>
+      <button class="btn ghost" id="exp">บันทึกเป็นไฟล์สำหรับส่งต่อ</button>
+    </div>
+  </header>
+  <div id="msg" class="msg" hidden></div>
+
+  <div id="emptyState" class="empty card" data-c="t1">
+    <p style="margin:0;font-size:17px;color:var(--ink)">ยังไม่มีข้อมูล</p>
+    <p style="margin:0">กดปุ่มด้านล่างแล้วเลือกไฟล์ Aging Weekly ของสัปดาห์ เช่น Aging_Weekly_02-11-2026.xlsm<br>ไฟล์จะถูกอ่านในเครื่องนี้เท่านั้น ไม่ได้ส่งขึ้นอินเทอร์เน็ต และจะเก็บไว้ย้อนหลังสูงสุด 4 สัปดาห์</p>
+    <label class="btn" for="file">เลือกไฟล์ Aging Weekly</label>
+  </div>
+
+  <div id="app" hidden>
+    <nav class="tabs" role="tablist">
+      <button class="tab" data-c="t1" data-tab="ov" aria-selected="true">ภาพรวม</button>
+      <button class="tab" data-c="t2" data-tab="dv" aria-selected="false">รายแผนก</button>
+      <button class="tab" data-c="t3" data-tab="tp" aria-selected="false">Top 30 รายการ</button>
+      <button class="tab" data-c="t4" data-tab="sp" aria-selected="false">ซัพพลายเออร์และสาเหตุ</button>
+      <button class="tab" data-c="t5" data-tab="hs" aria-selected="false">เทียบย้อนหลัง 4 สัปดาห์</button>
+    </nav>
+
+    <section class="pg" data-page="ov" data-c="t1">
+      <div class="tiles">
+        <div class="tile"><p class="l">มูลค่า Aging รวม (พันบาท)</p><p class="v" id="k-amt">—</p><p class="d" id="k-amt-d"></p></div>
+        <div class="tile"><p class="l">สัดส่วนต่อสต็อกทั้งหมด</p><p class="v" id="k-pct">—</p><p class="d" id="k-pct-d"></p></div>
+        <div class="tile"><p class="l">จำนวน SKU</p><p class="v" id="k-sku">—</p><p class="d" id="k-sku-d"></p></div>
+        <div class="tile"><p class="l">เข้าเกณฑ์ลดราคา CR+OB+FP (พันบาท)</p><p class="v" id="k-md">—</p><p class="d" id="k-md-d"></p></div>
+      </div>
+      <p class="note">เทียบกับสัปดาห์ก่อนหน้าในไฟล์ · สีเขียว = ดีขึ้น (ลดลง) · สีแดง = แย่ลง (เพิ่มขึ้น)</p>
+      <div class="card"><h2>มูลค่า Aging รายสัปดาห์ แยกตามสถานะ</h2><p class="note">พันบาท · ทุกสัปดาห์ที่อยู่ในชีท Compare Summary ของไฟล์ · ตัวเลขบนแท่งคือยอดรวม</p>
+        <div class="legend" id="lg1"></div><div class="chart" id="c-trend"></div></div>
+      <div class="grid">
+        <div class="card"><h2>สัดส่วน Aging ต่อสต็อก</h2><p class="note">% ของมูลค่าสต็อก</p><div class="chart" id="c-pct"></div></div>
+        <div class="card"><h2>จำนวน SKU ที่ติด Aging</h2><p class="note">SKU</p><div class="chart" id="c-sku"></div></div>
+      </div>
+      <div class="grid">
+        <div class="card"><h2>เปลี่ยนแปลงแยกตามสถานะ</h2><p class="note">พันบาท · สัปดาห์ก่อน → สัปดาห์นี้</p>
+          <table class="t"><thead><tr><th>สถานะ</th><th class="r">สัปดาห์ก่อน</th><th class="r">สัปดาห์นี้</th><th class="r">เปลี่ยนแปลง</th></tr></thead><tbody id="tb-st"></tbody></table></div>
+        <div class="card"><h2>ประมาณการส่วนลดตาม SM 014-001</h2><p class="note">ประมาณการแบบหยาบ = มูลค่าสต็อก × % ลดราคา (CR 20%, OB 40%, FP 70%)</p>
+          <table class="t"><thead><tr><th>สถานะ</th><th class="r">% ลด</th><th class="r">มูลค่า (พันบาท)</th><th class="r">ประมาณการ (พันบาท)</th></tr></thead><tbody id="tb-md"></tbody></table></div>
+      </div>
+    </section>
+
+    <section class="pg" data-page="dv" data-c="t2" hidden>
+      <div class="card"><h2>สัดส่วนมูลค่าแต่ละแผนก สัปดาห์นี้</h2><p class="note">พันบาท · แท่งแบ่งตามสถานะ</p><div class="legend" id="lg2"></div><div class="chart" id="c-dshare"></div></div>
+      <div class="card"><h2>เปลี่ยนแปลงรายแผนก × สถานะ</h2><p class="note">พันบาท · สัปดาห์ก่อน → สัปดาห์นี้</p>
+        <table class="t"><thead><tr><th>แผนก</th><th class="r">Alert</th><th class="r">Attention</th><th class="r">Critical</th><th class="r">Obsolete</th><th class="r">Full Provision</th><th class="r">รวม</th><th class="r">ยอดสัปดาห์นี้</th></tr></thead><tbody id="tb-dv"></tbody></table></div>
+      <div class="card"><h2>แนวโน้มรายแผนก</h2><p class="note">พันบาท · แต่ละกราฟใช้สเกลของตัวเอง</p><div class="grid" id="c-dsm"></div></div>
+    </section>
+
+    <section class="pg" data-page="tp" data-c="t3" hidden>
+      <div class="card"><h2>Top 30 รายการ เทียบสัปดาห์ก่อน</h2>
+        <div class="ctl">
+          <select id="tp-div"><option>Dry Food</option><option>Non Food</option><option>Fresh Food</option></select>
+          <select id="tp-list"><option value="All">ทุกสถานะ</option><option value="Critical">Critical</option><option value="Obsolete">Obsolete</option><option value="FullProvision">Full Provision</option></select>
+          <input type="search" id="tp-q" placeholder="ค้นหาชื่อหรือรหัสสินค้า">
+        </div>
+        <p class="note" id="tp-sum"></p>
+        <div class="chart" id="c-tp"></div>
+        <p class="note">10 อันดับแรกตามมูลค่า · <span class="bad hot">แท่งแดง</span> = สต็อกไม่ขยับ · แท่งม่วง = มีการขาย</p>
+        <div class="scroll"><table class="t" id="t-tp"><thead><tr><th class="s" data-k="item_no">รหัส</th><th class="s" data-k="item">สินค้า</th><th class="s" data-k="status">สถานะ</th><th class="s r" data-k="lw">สต็อกสัปดาห์ก่อน</th><th class="s r" data-k="cw">สต็อกล่าสุด</th><th class="s r" data-k="diff">เปลี่ยนแปลง</th><th class="s r" data-k="amount">มูลค่า (บาท)</th><th class="r">ติด Top 30 (สัปดาห์)</th></tr></thead><tbody id="tb-tp"></tbody></table></div>
+        <p class="note">เปลี่ยนแปลง: ติดลบ = ขายออก · 0 = ไม่ขยับ · บวก = เพิ่งเข้า Aging หรือมีของเข้า · "ติด Top 30" นับจากสัปดาห์ที่เก็บไว้ในเครื่องนี้</p>
+      </div>
+    </section>
+
+    <section class="pg" data-page="sp" data-c="t4" hidden>
+      <p class="note" id="sp-note"></p>
+      <div class="tiles">
+        <div class="tile"><p class="l">SKU ที่รวมกันได้ 50% ของมูลค่า</p><p class="v" id="k-par">—</p><p class="d" id="k-par-d"></p></div>
+        <div class="tile"><p class="l">SKU ที่ไม่มียอดขายเดือนนี้</p><p class="v" id="k-nos">—</p><p class="d" id="k-nos-d"></p></div>
+        <div class="tile"><p class="l">SKU ที่ยังมีของค้างสั่ง</p><p class="v" id="k-oo">—</p><p class="d" id="k-oo-d"></p></div>
+      </div>
+      <div class="grid">
+        <div class="card"><h2>ซัพพลายเออร์ที่มี Aging สูงสุด 10 อันดับ</h2><p class="note">บาท · ราคาทุน · คลิกแท่งเพื่อกรอง (คลิกซ้ำเพื่อยกเลิก)</p><div class="chart" id="c-sup"></div></div>
+        <div class="card"><h2>ดูรายซัพพลายเออร์</h2>
+          <select id="sp-sel" aria-label="ซัพพลายเออร์"></select>
+          <p class="note">อายุสต็อก (Aging Day) · มูลค่าบาทในแต่ละช่วง</p><div class="chart" id="c-age"></div>
+          <p class="note">สัดส่วนสถานะ · มูลค่าบาท</p><div class="chart" id="c-mix"></div></div>
+      </div>
+      <div class="card"><h2 id="sp-items-h">รายการสินค้า</h2><p class="note">เรียงตามมูลค่า · ถ้ายังไม่เลือกซัพพลายเออร์จะแสดง 50 รายการแรก</p>
+        <div class="scroll"><table class="t"><thead><tr><th>รหัส</th><th>สินค้า</th><th>ซัพพลายเออร์</th><th>สถานะ</th><th class="r">จำนวน</th><th class="r">มูลค่า (บาท)</th><th class="r">อายุ (วัน)</th><th class="r">ขาย MTD</th><th class="r">ค้างสั่ง</th></tr></thead><tbody id="tb-sp"></tbody></table></div></div>
+      <div class="card"><h2>สินค้าติด Aging ที่ยังมีของค้างสั่ง</h2><p class="note">ควรยกเลิกหรือชะลอ PO ก่อน</p>
+        <div class="scroll"><table class="t"><thead><tr><th>รหัส</th><th>สินค้า</th><th>สถานะ</th><th class="r">มูลค่า (บาท)</th><th class="r">ค้างสั่ง</th><th class="r">ขาย MTD</th></tr></thead><tbody id="tb-oo"></tbody></table></div></div>
+    </section>
+
+    <section class="pg" data-page="hs" data-c="t5" hidden>
+      <p class="note">เทียบสัปดาห์ที่เก็บไว้ในเครื่องนี้ (สูงสุด 4 สัปดาห์ล่าสุด เก่ากว่านั้นจะลบอัตโนมัติ)</p>
+      <div class="card"><h2>สรุปรายสัปดาห์ที่เก็บไว้</h2>
+        <table class="t"><thead><tr><th>สัปดาห์</th><th class="r">มูลค่ารวม (พันบาท)</th><th class="r">% สต็อก</th><th class="r">SKU</th><th class="r">CR+OB+FP (พันบาท)</th><th class="r">Dry</th><th class="r">Non Food</th><th class="r">Fresh</th><th>ไฟล์</th></tr></thead><tbody id="tb-hs"></tbody></table></div>
+      <div class="grid">
+        <div class="card"><h2>ซัพพลายเออร์ที่เปลี่ยนมากที่สุด</h2><p class="note" id="hs-sup-n">บาท · สัปดาห์เก่าสุด → ใหม่สุด ที่เก็บไว้</p><div class="chart" id="c-hsup"></div></div>
+        <div class="card"><h2>สินค้าที่ติด Top 30 ทุกสัปดาห์ที่เก็บไว้</h2><p class="note">ค้างนานที่สุด ควรหาวิธีระบายใหม่</p>
+          <div class="scroll"><table class="t"><thead><tr><th>รหัส</th><th>สินค้า</th><th>แผนก</th><th class="r">สต็อกแรก → ล่าสุด</th><th class="r">มูลค่าล่าสุด (บาท)</th></tr></thead><tbody id="tb-stuck"></tbody></table></div></div>
+      </div>
+    </section>
+
+    <details><summary>คำอธิบายและข้อควรรู้</summary>
+      <p>Alert / Attention = เริ่มขายช้า ยังไม่ต้องลดราคา · Critical / Obsolete / Full Provision = เข้าเกณฑ์ลดราคา 20% / 40% / 70% ตาม SM 014-001</p>
+      <p>ข้อมูลเก็บไว้ในเบราว์เซอร์ของเครื่องนี้เท่านั้น ถ้าล้างประวัติเบราว์เซอร์หรือเปิดจากเครื่องอื่นจะต้องอัปโหลดใหม่ ปุ่ม "บันทึกเป็นไฟล์สำหรับส่งต่อ" จะสร้างไฟล์ HTML ที่มีข้อมูลสัปดาห์ที่เก็บไว้ติดไปด้วย ส่งให้คนอื่นเปิดดูได้</p>
+      <p>หน้ารายซัพพลายเออร์ใช้ชีท Stock LY และหน้า Top 30 ใช้ชีท COMPARE ITEM ของไฟล์ที่อัปโหลด</p>
+    </details>
+  </div>
+</div>
+
+<script id="embedded" type="application/json">[]</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function(){
+const SRC = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+const KEY = 'agingST11_weeks_v1', MAXW = 4;
+const ST = ['Alert','Attention','Critical','Obsolete','Full Provision'];
+const STC = ['#F6D3A8','#EFA463','#E0702F','#B9461C','#6E2711'];
+const CODE = {AL:'Alert',AT:'Attention',CR:'Critical',OB:'Obsolete',FP:'Full Provision'};
+const DIVS = ['Dry Food','Non Food','Fresh Food'];
+const MD = {'Critical':0.2,'Obsolete':0.4,'Full Provision':0.7};
+const TH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const $ = id => document.getElementById(id);
+const n0 = d3.format(','), n2 = d3.format(',.2f');
+const wk = s => { const d = new Date(s + 'T00:00:00Z'); return d.getUTCDate() + ' ' + TH[d.getUTCMonth()]; };
+const wkY = s => { const d = new Date(s + 'T00:00:00Z'); return wk(s) + ' ' + (d.getUTCFullYear() + 543); };
+const sgn = (v, f) => (v > 0 ? '+' : v < 0 ? '−' : '') + (f || n0)(Math.abs(v));
+const num = v => { if (v === null || v === undefined || v === '') return null; const x = Number(v); return isFinite(x) ? x : null; };
+const short = v => Math.abs(v) >= 1e6 ? (v / 1e6).toFixed(2) + ' ลบ.' : Math.abs(v) >= 1e3 ? Math.round(v / 1e3) + 'K' : String(Math.round(v));
+const cls = v => v < 0 ? 'good' : v > 0 ? 'bad' : 'muted';
+const css = name => getComputedStyle(document.body).getPropertyValue(name).trim();
+function show(text, err){ const m = $('msg'); m.hidden = !text; m.textContent = text || ''; m.className = 'msg' + (err ? ' err' : ''); }
+
+/* ---------- storage ---------- */
+let weeks = [];
+function loadStore(){
+  let local = [];
+  try { local = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { local = []; }
+  let emb = [];
+  try { emb = JSON.parse($('embedded').textContent || '[]'); } catch (e) { emb = []; }
+  const m = new Map();
+  emb.concat(local).forEach(w => { if (w && w.week) m.set(w.week, w); });
+  weeks = [...m.values()].sort((a, b) => a.week < b.week ? 1 : -1).slice(0, MAXW);
+}
+function saveStore(){
+  try { localStorage.setItem(KEY, JSON.stringify(weeks)); return true; }
+  catch (e) { show('บันทึกลงเครื่องไม่สำเร็จ (พื้นที่เบราว์เซอร์อาจเต็มหรือถูกปิดไว้) ข้อมูลจะหายเมื่อปิดหน้านี้ แต่ยังกด "บันทึกเป็นไฟล์สำหรับส่งต่อ" ได้', true); return false; }
+}
+
+/* ---------- parsing ---------- */
+function rowsOf(ws){
+  const ref = XLSX.utils.decode_range(ws['!ref']); ref.s.r = 0; ref.s.c = 0;
+  return XLSX.utils.sheet_to_json(ws, {header: 1, raw: true, defval: null, blankrows: true, range: ref});
+}
+const toISO = v => {
+  if (v instanceof Date) return new Date(Date.UTC(v.getFullYear(), v.getMonth(), v.getDate(), 12)).toISOString().slice(0, 10);
+  if (typeof v === 'number' && v > 30000 && v < 80000) { const d = new Date(Math.round((v - 25569) * 864e5)); return d.toISOString().slice(0, 10); }
+  return null;
+};
+function findSheet(wb, name){ const k = wb.SheetNames.find(s => s.trim().toLowerCase() === name.toLowerCase()); return k ? wb.Sheets[k] : null; }
+function parseSummary(ws){
+  const R = rowsOf(ws);
+  let hdrRow = -1;
+  for (let i = 0; i < Math.min(6, R.length); i++) if ((R[i] || []).some(v => toISO(v))) { hdrRow = i; break; }
+  if (hdrRow < 0) throw new Error('ไม่พบวันที่ในชีท Compare Summary');
+  const blocks = [];
+  R[hdrRow].forEach((v, c) => { const iso = toISO(v); if (iso) blocks.push({iso, off: c - 3}); });
+  const status = [], total = [], division = [];
+  blocks.forEach(({iso, off}) => {
+    if (off < 0) return;
+    let div = null, inDiv = false;
+    for (let i = hdrRow + 1; i < R.length; i++) {
+      const r = R[i] || [], a = r[off];
+      const name = typeof a === 'string' ? a.trim() : a;
+      if (!inDiv) {
+        const nm = name === 'Obselete' ? 'Obsolete' : name;
+        if (ST.includes(nm)) status.push({week: iso, status: nm, amount_k: +r[off + 1] || 0, sku: +r[off + 2] || 0, pct: +r[off + 3] || 0});
+        else if (nm === 'Total') { total.push({week: iso, amount_k: +r[off + 1] || 0, sku: +r[off + 2] || 0, pct: +r[off + 3] || 0}); inDiv = true; }
+      } else {
+        if (typeof name === 'string' && name && name !== 'Division' && !/total/i.test(name)) div = name.replace(/\s+/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+        const sd = r[off + 2];
+        if (div && typeof sd === 'string' && sd.trim() && sd.trim() !== 'Aging Status Desc') {
+          const s2 = sd.trim() === 'Obselete' ? 'Obsolete' : sd.trim();
+          if (ST.includes(s2)) division.push({week: iso, division: div, status: s2, amount_k: +(+r[off + 3] || 0).toFixed(1)});
+        }
+      }
+    }
+  });
+  if (!total.length) throw new Error('อ่านยอดรวมในชีท Compare Summary ไม่ได้');
+  return {status, total, division};
+}
+function parseTop30(ws){
+  if (!ws) return [];
+  const R = rowsOf(ws), out = [], lists = ['All','Critical','Obsolete','FullProvision'];
+  const starts = [];
+  R.forEach((r, i) => { const a = r && typeof r[0] === 'string' ? r[0].trim().toUpperCase() : ''; if (['DRY FOOD','FRESH FOOD','NON FOOD'].includes(a)) starts.push([i, a]); });
+  starts.forEach(([s, a]) => {
+    const dv = a.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+    lists.forEach((l, b) => {
+      const off = b * 13, seen = new Set();
+      for (let i = s + 2; i < Math.min(R.length, s + 32); i++) {
+        const v = (R[i] || []).slice(off, off + 12);
+        if (num(v[4]) == null || num(v[11]) == null) continue;
+        const key = String(v[4]); if (seen.has(key)) continue; seen.add(key);
+        const lw = num(v[7]), cw = num(v[8]); let diff = num(v[9]);
+        if (diff == null && lw != null && cw != null) diff = cw - lw;
+        out.push({division: dv, list: l, item_no: key, item: String(v[5] || ''), status: String(v[6] || ''), lw, cw, diff, amount: +num(v[11]).toFixed(2)});
+      }
+    });
+  });
+  return out;
+}
+function parseItems(ws){
+  if (!ws) return [];
+  const raw = XLSX.utils.sheet_to_json(ws, {raw: true, defval: null});
+  return raw.map(o => { const r = {}; Object.keys(o).forEach(k => r[k.trim()] = o[k]); return r; })
+    .filter(r => r['Item Number'] != null && r['Amount'] != null)
+    .map(r => ({division: String(r['Division'] || '').trim(), supplier: String(r['Supplier'] || '').trim(), item_no: String(r['Item Number']), item: String(r['Item'] || ''),
+      status: String(r['Aging Status ID'] || '').trim(), qty: num(r['Qty']) || 0, amount: +(+r['Amount']).toFixed(2), aging_day: num(r['Aging Day']) || 0,
+      on_order: num(r['On Order Qty']) || 0, sales_mtd: num(r['Net Sales Qty MTD']) || 0, wac: num(r['WAC']) || 0}));
+}
+async function handleFile(f){
+  show('กำลังอ่านไฟล์ ' + f.name + ' …');
+  try {
+    if (typeof XLSX === 'undefined') throw new Error('โหลดตัวอ่าน Excel ไม่สำเร็จ ตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่');
+    const buf = await f.arrayBuffer();
+    const wb = XLSX.read(buf, {type: 'array', cellDates: true});
+    const sum = findSheet(wb, 'Compare Summary');
+    if (!sum) throw new Error('ไม่พบชีท "Compare Summary" ในไฟล์นี้');
+    const summary = parseSummary(sum);
+    const top30 = parseTop30(findSheet(wb, 'COMPARE ITEM'));
+    const items = parseItems(findSheet(wb, 'Stock LY'));
+    const week = summary.total.map(t => t.week).sort().pop();
+    const rec = {week, file: f.name, uploaded: new Date().toISOString(), summary, top30, items};
+    weeks = weeks.filter(w => w.week !== week).concat([rec]).sort((a, b) => a.week < b.week ? 1 : -1);
+    const dropped = weeks.slice(MAXW); weeks = weeks.slice(0, MAXW);
+    const ok = saveStore();
+    cur = week; fillWeeks(); render();
+    if (ok) show('อัปโหลดสัปดาห์ ' + wkY(week) + ' แล้ว (Top 30 ' + top30.length + ' แถว · รายสินค้า ' + items.length + ' รายการ)' + (dropped.length ? ' · ลบสัปดาห์ ' + dropped.map(d => wkY(d.week)).join(', ') + ' ออกเพราะเกิน 4 สัปดาห์' : '') + (!items.length ? ' · ไม่พบชีท Stock LY หน้าซัพพลายเออร์จะว่าง' : ''));
+  } catch (e) { show('อ่านไฟล์ไม่สำเร็จ: ' + (e && e.message ? e.message : e), true); }
+}
+
+/* ---------- state + controls ---------- */
+let cur = null, tab = 'ov', SUP = '', TP = {key: 'amount', dir: -1};
+function W(){ return weeks.find(w => w.week === cur) || weeks[0]; }
+function fillWeeks(){
+  const sel = $('week'); sel.replaceChildren(...weeks.map(w => new Option(wkY(w.week), w.week)));
+  if (!weeks.some(w => w.week === cur)) cur = weeks[0] ? weeks[0].week : null;
+  sel.value = cur || '';
+  $('emptyState').hidden = !!weeks.length; $('app').hidden = !weeks.length;
+  $('del').hidden = !weeks.length; $('exp').hidden = !weeks.length; sel.hidden = !weeks.length; sel.previousElementSibling.hidden = !weeks.length;
+}
+$('file').addEventListener('change', e => { const f = e.target.files[0]; if (f) handleFile(f); e.target.value = ''; });
+$('week').addEventListener('change', e => { cur = e.target.value; SUP = ''; render(); });
+$('del').addEventListener('click', () => {
+  const w = W(); if (!w) return;
+  if ($('del').dataset.confirm !== w.week) { $('del').dataset.confirm = w.week; $('del').textContent = 'กดอีกครั้งเพื่อยืนยันลบ ' + wk(w.week); setTimeout(() => { $('del').dataset.confirm = ''; $('del').textContent = 'ลบสัปดาห์นี้'; }, 4000); return; }
+  weeks = weeks.filter(x => x.week !== w.week); saveStore(); $('del').dataset.confirm = ''; $('del').textContent = 'ลบสัปดาห์นี้'; cur = null; fillWeeks(); render(); show('ลบสัปดาห์ ' + wkY(w.week) + ' แล้ว');
+});
+$('exp').addEventListener('click', () => {
+  try {
+    const data = JSON.stringify(weeks).replace(/</g, '\\u003c');
+    const html = SRC.replace(/<script id="embedded" type="application\/json">[\s\S]*?<\/script>/, '<script id="embedded" type="application/json">' + data + '<\/script>');
+    const blob = new Blob([html], {type: 'text/html'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Aging_Dashboard_ST11_' + (weeks[0] ? weeks[0].week : 'data') + '.html';
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    show('สร้างไฟล์แล้ว ถ้าไม่มีไฟล์ดาวน์โหลด ให้เปิด Dashboard นี้จากไฟล์ในเครื่องแล้วลองกดอีกครั้ง');
+  } catch (e) { show('สร้างไฟล์ไม่สำเร็จ: ' + e.message, true); }
+});
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  tab = b.dataset.tab;
+  document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', String(x === b)));
+  document.querySelectorAll('section.pg').forEach(s => s.hidden = s.dataset.page !== tab);
+  render();
+}));
+['tp-div','tp-list'].forEach(id => $(id).addEventListener('change', () => render()));
+$('tp-q').addEventListener('input', () => drawTopTable());
+document.querySelectorAll('#t-tp th.s').forEach(th => th.addEventListener('click', () => {
+  const k = th.dataset.k; if (TP.key === k) TP.dir *= -1; else { TP.key = k; TP.dir = ['item','item_no','status'].includes(k) ? 1 : -1; }
+  drawTopTable();
+}));
+$('sp-sel').addEventListener('change', e => { SUP = e.target.value; drawSup(); });
+let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(render, 200); });
+
+/* ---------- helpers ---------- */
+const legend = el => { el.replaceChildren(...ST.map((s, i) => { const sp = document.createElement('span'); const ic = document.createElement('i'); ic.style.background = STC[i]; sp.append(ic, s); return sp; })); };
+function svgIn(el, H){ el.replaceChildren(); const W0 = el.clientWidth || 600; const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W0} ${H}`); return [svg, W0]; }
+function tipOf(el){ let t = el.querySelector('.tip'); if (!t) { t = document.createElement('div'); t.className = 'tip'; t.hidden = true; el.appendChild(t); } return t; }
+function tipShow(el, ev, lines){ const t = tipOf(el); t.replaceChildren(); lines.forEach((l, i) => { const d = document.createElement('div'); if (i === 0) d.className = 'h'; if (Array.isArray(l)) { const sw = document.createElement('i'); sw.style.cssText = 'display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;background:' + l[0]; d.append(sw, l[1]); } else d.textContent = l; t.appendChild(d); }); const [x, y] = d3.pointer(ev, el); t.hidden = false; t.style.left = Math.max(0, Math.min(el.clientWidth - t.offsetWidth, x + 12)) + 'px'; t.style.top = Math.max(0, y - 10) + 'px'; }
+const tipHide = el => { const t = el.querySelector('.tip'); if (t) t.hidden = true; };
+function td(tr, text, c){ const x = tr.insertCell(); x.textContent = text; if (c) x.className = c; return x; }
+function grid(svg, y, x0, x1, ticks, fmt){ svg.append('g').selectAll('line').data(y.ticks(ticks)).join('line').attr('x1', x0).attr('x2', x1).attr('y1', d => y(d)).attr('y2', d => y(d)).attr('stroke', css('--line')); svg.append('g').selectAll('text').data(y.ticks(ticks)).join('text').attr('x', x0 - 6).attr('y', d => y(d) + 4).attr('text-anchor', 'end').attr('font-size', 11).attr('fill', css('--soft')).text(fmt); }
+function weeksIn(w){ return [...new Set(w.summary.total.map(t => t.week))].sort(); }
+function stAmt(w, week, s){ const r = w.summary.status.find(x => x.week === week && x.status === s); return r ? r.amount_k : 0; }
+function divAmt(w, week, d, s){ return d3.sum(w.summary.division.filter(x => x.week === week && x.division === d && (!s || x.status === s)), x => x.amount_k); }
+function totOf(w, week){ return w.summary.total.find(t => t.week === week) || {amount_k: 0, sku: 0, pct: 0}; }
+
+/* ---------- overview ---------- */
+function drawOverview(w){
+  const ws = weeksIn(w), cw = ws[ws.length - 1], pw = ws[ws.length - 2];
+  const tc = totOf(w, cw), tp = pw ? totOf(w, pw) : null;
+  const md = wk2 => d3.sum(['Critical','Obsolete','Full Provision'], s => stAmt(w, wk2, s));
+  const set = (id, v, d, f, unit) => { $(id).textContent = f(v); const e = $(id + '-d'); if (d == null) { e.textContent = ''; return; } e.textContent = sgn(d, f) + (unit || '') + ' จากสัปดาห์ก่อน'; e.className = 'd ' + cls(d); };
+  set('k-amt', tc.amount_k, tp ? tc.amount_k - tp.amount_k : null, n0);
+  set('k-pct', tc.pct, tp ? +(tc.pct - tp.pct).toFixed(2) : null, n2, ' จุด'); $('k-pct').textContent += '%';
+  set('k-sku', tc.sku, tp ? tc.sku - tp.sku : null, n0);
+  set('k-md', md(cw), pw ? md(cw) - md(pw) : null, n0);
+  $('lead').textContent = 'สัปดาห์ ' + wkY(cw) + ' · มูลค่า Aging ' + (tc.amount_k / 1000).toFixed(2) + ' ล้านบาท' + (tp ? ' (' + sgn(tc.amount_k - tp.amount_k) + ' พันบาท จากสัปดาห์ก่อน)' : '') + ' · ไฟล์: ' + w.file;
+  legend($('lg1'));
+  // trend
+  const el = $('c-trend'), H = 320, [svg, Wd] = svgIn(el, H), m = {t: 24, r: 8, b: 26, l: 52};
+  const data = ws.map(k => { const o = {week: k}; ST.forEach(s => o[s] = stAmt(w, k, s)); o.total = totOf(w, k).amount_k; o.pct = totOf(w, k).pct; return o; });
+  const x = d3.scaleBand(ws, [m.l, Wd - m.r]).padding(0.3), y = d3.scaleLinear([0, d3.max(data, d => d.total) * 1.12 || 1], [H - m.b, m.t]).nice();
+  grid(svg, y, m.l, Wd - m.r, 4, d => n0(d));
+  const bw = Math.min(x.bandwidth(), 56), off = (x.bandwidth() - bw) / 2;
+  svg.append('g').selectAll('g').data(d3.stack().keys(ST)(data)).join('g').attr('fill', (d, i) => STC[i]).selectAll('rect').data(d => d).join('rect').attr('x', d => x(d.data.week) + off).attr('width', bw).attr('y', d => y(d[1])).attr('height', d => Math.max(0, y(d[0]) - y(d[1])));
+  svg.append('g').selectAll('text').data(data).join('text').attr('x', d => x(d.week) + x.bandwidth() / 2).attr('y', d => y(d.total) - 6).attr('text-anchor', 'middle').attr('font-size', 12).attr('font-weight', (d, i) => i === data.length - 1 ? 700 : 500).attr('fill', css('--ink')).text(d => n0(d.total));
+  svg.append('g').selectAll('text').data(data).join('text').attr('x', d => x(d.week) + x.bandwidth() / 2).attr('y', H - 7).attr('text-anchor', 'middle').attr('font-size', 11).attr('fill', css('--soft')).text(d => wk(d.week));
+  svg.append('g').selectAll('rect').data(data).join('rect').attr('x', d => x(d.week)).attr('width', x.bandwidth()).attr('y', m.t).attr('height', H - m.t - m.b).attr('fill', 'transparent')
+    .on('mousemove', (ev, d) => tipShow(el, ev, ['สัปดาห์ ' + wk(d.week) + ' · รวม ' + n0(d.total) + ' พันบาท (' + n2(d.pct) + '%)'].concat(ST.slice().reverse().map(s => [STC[ST.indexOf(s)], s + ' ' + n0(d[s])])))).on('mouseleave', () => tipHide(el));
+  line($('c-pct'), data.map(d => ({w: d.week, v: d.pct})), v => n2(v) + '%', css('--t1'));
+  line($('c-sku'), data.map(d => ({w: d.week, v: totOf(w, d.week).sku})), v => n0(v), css('--t1'));
+  // tables
+  const tb = $('tb-st'); tb.replaceChildren();
+  ST.forEach(s => { const a = pw ? stAmt(w, pw, s) : 0, b = stAmt(w, cw, s), tr = tb.insertRow(); td(tr, s); td(tr, pw ? n0(a) : '—', 'r'); td(tr, n0(b), 'r'); td(tr, pw ? sgn(b - a) : '—', 'r hot ' + cls(b - a)); });
+  const tm = $('tb-md'); tm.replaceChildren(); let sa = 0, se = 0;
+  Object.keys(MD).forEach(s => { const a = stAmt(w, cw, s), e = Math.round(a * MD[s]); sa += a; se += e; const tr = tm.insertRow(); td(tr, s); td(tr, (MD[s] * 100) + '%', 'r'); td(tr, n0(a), 'r'); td(tr, '≈ ' + n0(e), 'r hot bad'); });
+  const tr = tm.insertRow(); td(tr, 'รวม', 'hot'); td(tr, ''); td(tr, n0(sa), 'r hot'); td(tr, '≈ ' + n0(se), 'r hot bad');
+}
+function line(el, d, fmt, color){
+  const H = 220, [svg, Wd] = svgIn(el, H), m = {t: 24, r: 18, b: 24, l: 52};
+  const x = d3.scalePoint(d.map(p => p.w), [m.l, Wd - m.r]).padding(0.4); const ext = d3.extent(d, p => p.v), pad = (ext[1] - ext[0]) * 0.25 || 1;
+  const y = d3.scaleLinear([ext[0] - pad, ext[1] + pad], [H - m.b, m.t]).nice();
+  grid(svg, y, m.l, Wd - m.r, 3, fmt);
+  svg.append('path').datum(d).attr('d', d3.area().x(p => x(p.w)).y0(H - m.b).y1(p => y(p.v))).attr('fill', color).attr('opacity', 0.14);
+  svg.append('path').datum(d).attr('d', d3.line().x(p => x(p.w)).y(p => y(p.v))).attr('fill', 'none').attr('stroke', color).attr('stroke-width', 2).attr('stroke-linejoin', 'round').attr('stroke-linecap', 'round');
+  svg.append('g').selectAll('circle').data(d).join('circle').attr('cx', p => x(p.w)).attr('cy', p => y(p.v)).attr('r', 3.5).attr('fill', color);
+  svg.append('g').selectAll('text').data(d).join('text').attr('x', p => x(p.w)).attr('y', p => y(p.v) - 9).attr('text-anchor', 'middle').attr('font-size', 11).attr('fill', css('--ink')).text(p => fmt(p.v));
+  svg.append('g').selectAll('text').data(d).join('text').attr('x', p => x(p.w)).attr('y', H - 6).attr('text-anchor', 'middle').attr('font-size', 11).attr('fill', css('--soft')).text(p => wk(p.w));
+}
+
+/* ---------- divisions ---------- */
+function drawDivision(w){
+  const ws = weeksIn(w), cw = ws[ws.length - 1], pw = ws[ws.length - 2];
+  legend($('lg2'));
+  const divs = [...new Set(w.summary.division.map(d => d.division))];
+  const order = DIVS.filter(d => divs.includes(d)).concat(divs.filter(d => !DIVS.includes(d)));
+  const data = order.map(dv => { const o = {div: dv}; ST.forEach(s => o[s] = divAmt(w, cw, dv, s)); o.total = d3.sum(ST, s => o[s]); return o; });
+  const grand = d3.sum(data, d => d.total) || 1;
+  const el = $('c-dshare'), rowH = 46, H = 12 + data.length * rowH, [svg, Wd] = svgIn(el, H), m = {l: 92, r: 120};
+  const x = d3.scaleLinear([0, d3.max(data, d => d.total) || 1], [m.l, Wd - m.r]);
+  const g = svg.selectAll('g.r').data(data).join('g').attr('class', 'r').attr('transform', (d, i) => `translate(0,${6 + i * rowH})`);
+  g.append('text').attr('x', m.l - 8).attr('y', rowH / 2 + 4).attr('text-anchor', 'end').attr('font-size', 12).attr('fill', css('--ink')).text(d => d.div);
+  g.each(function (d) { let a = 0; const gg = d3.select(this); ST.forEach((s, i) => { gg.append('rect').attr('x', x(a)).attr('y', 10).attr('height', rowH - 20).attr('width', Math.max(0, x(a + d[s]) - x(a))).attr('fill', STC[i]); a += d[s]; }); });
+  g.append('text').attr('x', d => x(d.total) + 6).attr('y', rowH / 2 + 4).attr('font-size', 12).attr('fill', css('--ink')).text(d => n0(Math.round(d.total)) + ' · ' + Math.round(d.total / grand * 100) + '%');
+  const tb = $('tb-dv'); tb.replaceChildren();
+  order.forEach(dv => { const tr = tb.insertRow(); td(tr, dv, 'hot'); ST.forEach(s => { const v = pw ? +(divAmt(w, cw, dv, s) - divAmt(w, pw, dv, s)).toFixed(1) : 0; td(tr, pw ? (v === 0 ? '0' : sgn(v)) : '—', 'r ' + cls(v)); });
+    const t = pw ? +(divAmt(w, cw, dv) - divAmt(w, pw, dv)).toFixed(1) : 0; td(tr, pw ? sgn(t) : '—', 'r hot ' + cls(t)); td(tr, n0(Math.round(divAmt(w, cw, dv))), 'r'); });
+  const box = $('c-dsm'); box.replaceChildren();
+  order.forEach(dv => {
+    const wrap = document.createElement('div'); const p = document.createElement('p'); p.className = 'note'; p.textContent = dv; const c = document.createElement('div'); c.className = 'chart'; wrap.append(p, c); box.appendChild(wrap);
+    const d = ws.map(k => { const o = {week: k}; ST.forEach(s => o[s] = divAmt(w, k, dv, s)); o.total = d3.sum(ST, s => o[s]); return o; });
+    const H2 = 210, [s2, W2] = svgIn(c, H2), mm = {t: 20, r: 4, b: 22, l: 44};
+    const x2 = d3.scaleBand(ws, [mm.l, W2 - mm.r]).padding(0.3), y2 = d3.scaleLinear([0, d3.max(d, q => q.total) * 1.15 || 1], [H2 - mm.b, mm.t]).nice();
+    grid(s2, y2, mm.l, W2 - mm.r, 3, v => n0(v));
+    const bw = Math.min(x2.bandwidth(), 32), off = (x2.bandwidth() - bw) / 2;
+    s2.append('g').selectAll('g').data(d3.stack().keys(ST)(d)).join('g').attr('fill', (q, i) => STC[i]).selectAll('rect').data(q => q).join('rect').attr('x', q => x2(q.data.week) + off).attr('width', bw).attr('y', q => y2(q[1])).attr('height', q => Math.max(0, y2(q[0]) - y2(q[1])));
+    const last = d[d.length - 1]; if (last) s2.append('text').attr('x', x2(last.week) + x2.bandwidth() / 2).attr('y', y2(last.total) - 6).attr('text-anchor', 'middle').attr('font-size', 11).attr('font-weight', 600).attr('fill', css('--ink')).text(n0(Math.round(last.total)));
+    s2.append('g').selectAll('rect').data(d).join('rect').attr('x', q => x2(q.week)).attr('width', x2.bandwidth()).attr('y', mm.t).attr('height', H2 - mm.t - mm.b).attr('fill', 'transparent')
+      .on('mousemove', (ev, q) => tipShow(c, ev, [dv + ' · ' + wk(q.week) + ' · รวม ' + n0(Math.round(q.total))].concat(ST.slice().reverse().map(s => [STC[ST.indexOf(s)], s + ' ' + n0(Math.round(q[s]))])))).on('mouseleave', () => tipHide(c));
+  });
+}
+
+/* ---------- top 30 ---------- */
+function topRows(w){ return (w.top30 || []).filter(r => r.division === $('tp-div').value && r.list === $('tp-list').value); }
+function drawTop(w){
+  const rows = topRows(w), z = rows.filter(r => r.diff === 0);
+  $('tp-sum').textContent = rows.length ? 'ไม่มีการขายเลยในสัปดาห์นี้ (สต็อกเท่าเดิม) ' + z.length + ' จาก ' + rows.length + ' รายการ มูลค่า ' + n0(Math.round(d3.sum(z, r => r.amount))) + ' บาท จากทั้งหมด ' + n0(Math.round(d3.sum(rows, r => r.amount))) + ' บาท' : 'ไม่มีข้อมูล Top 30 ของกลุ่มนี้ในไฟล์';
+  const d = rows.slice().sort((a, b) => b.amount - a.amount).slice(0, 10), el = $('c-tp');
+  if (!d.length) { el.replaceChildren(); } else {
+    const rowH = 28, H = 8 + d.length * rowH, [svg, Wd] = svgIn(el, H), l = Math.min(270, Wd * 0.45);
+    const x = d3.scaleLinear([0, d3.max(d, r => r.amount)], [l, Wd - 74]);
+    const g = svg.selectAll('g').data(d).join('g').attr('transform', (r, i) => `translate(0,${4 + i * rowH})`);
+    g.append('text').attr('x', l - 8).attr('y', rowH / 2 + 4).attr('text-anchor', 'end').attr('font-size', 12).attr('fill', css('--ink')).text(r => r.item.slice(0, 34));
+    g.append('rect').attr('x', l).attr('y', 5).attr('height', rowH - 10).attr('rx', 3).attr('width', r => Math.max(1, x(r.amount) - l)).attr('fill', r => r.diff === 0 ? css('--bad') : css('--t3'));
+    g.append('text').attr('x', r => x(r.amount) + 6).attr('y', rowH / 2 + 4).attr('font-size', 11).attr('fill', css('--soft')).text(r => n0(Math.round(r.amount)));
+  }
+  drawTopTable();
+}
+function drawTopTable(){
+  const w = W(); if (!w) return;
+  const q = $('tp-q').value.trim().toLowerCase(), numK = !['item','item_no','status'].includes(TP.key);
+  const cnt = {}; weeks.forEach(x => new Set((x.top30 || []).filter(r => r.list === 'All').map(r => r.item_no)).forEach(k => cnt[k] = (cnt[k] || 0) + 1));
+  const tb = $('tb-tp'); tb.replaceChildren();
+  topRows(w).filter(r => !q || r.item.toLowerCase().includes(q) || r.item_no.includes(q))
+    .sort((a, b) => { const va = numK ? (a[TP.key] ?? -Infinity) : String(a[TP.key]), vb = numK ? (b[TP.key] ?? -Infinity) : String(b[TP.key]); return (va < vb ? -1 : va > vb ? 1 : 0) * TP.dir; })
+    .forEach(r => { const tr = tb.insertRow(); td(tr, r.item_no); td(tr, r.item); td(tr, r.status); td(tr, r.lw == null ? '' : n0(r.lw), 'r'); td(tr, r.cw == null ? '' : n0(r.cw), 'r');
+      td(tr, r.diff == null ? '' : r.diff === 0 ? '0' : sgn(r.diff), 'r ' + (r.diff === 0 ? 'hot bad' : r.diff > 0 ? 'bad' : 'muted')); td(tr, n0(Math.round(r.amount)), 'r');
+      const c = cnt[r.item_no] || 0; td(tr, c ? c + ' / ' + weeks.length : '', 'r' + (c > 1 && c === weeks.length ? ' hot bad' : '')); });
+}
+
+/* ---------- suppliers ---------- */
+function drawSup(){
+  const w = W(); if (!w) return; const it = w.items || [];
+  $('sp-note').textContent = it.length ? 'ข้อมูลจากชีท Stock LY ของไฟล์สัปดาห์ ' + wkY(w.week) + ' · ' + n0(it.length) + ' รายการ · ยอดรวม ' + n0(Math.round(d3.sum(it, r => r.amount))) + ' บาท (อาจไม่เท่ายอดใน Compare Summary พอดี เพราะดึงคนละช่วงเวลา)' : 'ไฟล์สัปดาห์นี้ไม่มีชีท Stock LY จึงไม่มีข้อมูลรายสินค้า';
+  const amts = it.map(r => r.amount).sort((a, b) => b - a), tot = d3.sum(amts); let c = 0, k = 0; for (const a of amts) { if (c >= tot / 2) break; c += a; k++; }
+  const nos = it.filter(r => !r.sales_mtd), oo = it.filter(r => r.on_order > 0);
+  $('k-par').textContent = it.length ? n0(k) : '—'; $('k-par-d').textContent = it.length ? 'จากทั้งหมด ' + n0(it.length) + ' SKU' : '';
+  $('k-nos').textContent = it.length ? n0(nos.length) : '—'; $('k-nos-d').textContent = it.length ? 'มูลค่า ' + n0(Math.round(d3.sum(nos, r => r.amount))) + ' บาท' : '';
+  $('k-oo').textContent = it.length ? n0(oo.length) : '—'; $('k-oo-d').textContent = it.length ? 'มูลค่าที่ค้างสั่ง ≈ ' + n0(Math.round(d3.sum(oo, r => r.on_order * r.wac))) + ' บาท (ราคาทุน)' : '';
+  const sums = d3.rollups(it, v => ({amount: d3.sum(v, r => r.amount), n: v.length}), r => r.supplier).map(([s, o]) => ({s, ...o})).sort((a, b) => b.amount - a.amount);
+  const sel = $('sp-sel'); sel.replaceChildren(new Option('ทุกซัพพลายเออร์', ''), ...sums.map(o => new Option(o.s + ' (' + short(o.amount) + ')', o.s))); sel.value = SUP;
+  // top10 bars
+  const top = sums.slice(0, 10), el = $('c-sup');
+  if (!top.length) el.replaceChildren(); else {
+    const rowH = 30, H = 8 + top.length * rowH, [svg, Wd] = svgIn(el, H), l = Math.min(230, Wd * 0.45), x = d3.scaleLinear([0, top[0].amount], [l, Wd - 64]);
+    const g = svg.selectAll('g').data(top).join('g').attr('transform', (d, i) => `translate(0,${4 + i * rowH})`).style('cursor', 'pointer');
+    g.append('text').attr('x', l - 8).attr('y', rowH / 2 + 4).attr('text-anchor', 'end').attr('font-size', 12).attr('fill', css('--ink')).text(d => d.s.replace('บมจ.', '').replace('บจ.', '').trim().slice(0, 28));
+    g.append('rect').attr('x', l).attr('y', 6).attr('height', rowH - 12).attr('rx', 3).attr('width', d => Math.max(1, x(d.amount) - l)).attr('fill', css('--t4')).attr('opacity', d => !SUP || SUP === d.s ? 1 : 0.35);
+    g.append('text').attr('x', d => x(d.amount) + 6).attr('y', rowH / 2 + 4).attr('font-size', 11).attr('fill', css('--soft')).text(d => short(d.amount));
+    g.append('rect').attr('width', Wd).attr('height', rowH).attr('fill', 'transparent')
+      .on('mousemove', (ev, d) => tipShow(el, ev, [d.s, n0(Math.round(d.amount)) + ' บาท · ' + d.n + ' SKU'])).on('mouseleave', () => tipHide(el))
+      .on('click', (ev, d) => { SUP = SUP === d.s ? '' : d.s; drawSup(); });
+  }
+  const rs = SUP ? it.filter(r => r.supplier === SUP) : it;
+  // age histogram
+  const bins = [[0,60,'≤60'],[60,90,'61–90'],[90,120,'91–120'],[120,180,'121–180'],[180,365,'181–365'],[365,1e9,'>365']];
+  const hd = bins.map(([a, b, lb]) => ({lb, v: d3.sum(rs.filter(r => r.aging_day > a && r.aging_day <= b), r => r.amount)}));
+  { const el2 = $('c-age'), H = 200, [svg, Wd] = svgIn(el2, H), x = d3.scaleBand(hd.map(p => p.lb), [8, Wd - 6]).padding(0.25), y = d3.scaleLinear([0, d3.max(hd, p => p.v) || 1], [H - 24, 20]);
+    const op = [0.35, 0.5, 0.65, 0.8, 0.92, 1];
+    svg.selectAll('rect').data(hd).join('rect').attr('x', p => x(p.lb)).attr('width', x.bandwidth()).attr('y', p => y(p.v)).attr('height', p => H - 24 - y(p.v)).attr('rx', 3).attr('fill', css('--t4')).attr('opacity', (p, i) => op[i]);
+    svg.selectAll('text.v').data(hd).join('text').attr('class', 'v').attr('x', p => x(p.lb) + x.bandwidth() / 2).attr('y', p => y(p.v) - 6).attr('text-anchor', 'middle').attr('font-size', 11).attr('fill', css('--ink')).text(p => p.v ? short(p.v) : '');
+    svg.selectAll('text.l').data(hd).join('text').attr('class', 'l').attr('x', p => x(p.lb) + x.bandwidth() / 2).attr('y', H - 7).attr('text-anchor', 'middle').attr('font-size', 11).attr('fill', css('--soft')).text(p => p.lb + ' วัน'); }
+  // mix donut
+  { const md2 = Object.keys(CODE).map((c2, i) => ({n: CODE[c2], i, v: d3.sum(rs.filter(r => r.status === c2), r => r.amount)})).filter(p => p.v > 0), tt = d3.sum(md2, p => p.v) || 1;
+    const el3 = $('c-mix'), H = 200, [svg, Wd] = svgIn(el3, H), R = Math.max(40, Math.min(Wd / 2 - 100, 85));
+    const g = svg.append('g').attr('transform', `translate(${R + 10},${H / 2})`);
+    g.selectAll('path').data(d3.pie().sort(null).value(p => p.v)(md2)).join('path').attr('d', d3.arc().innerRadius(R * 0.58).outerRadius(R)).attr('fill', a => STC[a.data.i]).attr('stroke', css('--card')).attr('stroke-width', 2);
+    g.append('text').attr('text-anchor', 'middle').attr('y', 5).attr('font-size', 13).attr('fill', css('--ink')).text(short(tt));
+    const lg = svg.append('g').attr('transform', `translate(${2 * R + 28},${H / 2 - md2.length * 11})`);
+    md2.forEach((p, k2) => { const r = lg.append('g').attr('transform', `translate(0,${k2 * 22})`); r.append('rect').attr('width', 10).attr('height', 10).attr('rx', 2).attr('fill', STC[p.i]); r.append('text').attr('x', 16).attr('y', 9).attr('font-size', 11).attr('fill', css('--ink')).text(p.n + ' ' + Math.round(p.v / tt * 100) + '%'); }); }
+  $('sp-items-h').textContent = SUP ? 'รายการสินค้าของ ' + SUP : 'รายการสินค้า (ทุกซัพพลายเออร์)';
+  const tb = $('tb-sp'); tb.replaceChildren();
+  rs.slice().sort((a, b) => b.amount - a.amount).slice(0, SUP ? 1000 : 50).forEach(r => { const tr = tb.insertRow(); td(tr, r.item_no); td(tr, r.item); td(tr, r.supplier.replace('บมจ.', '').replace('บจ.', '').trim()); td(tr, r.status); td(tr, n0(r.qty), 'r'); td(tr, n0(Math.round(r.amount)), 'r'); td(tr, n0(r.aging_day), 'r'); td(tr, n0(r.sales_mtd), 'r' + (!r.sales_mtd ? ' hot bad' : '')); td(tr, r.on_order ? n0(r.on_order) : '', 'r' + (r.on_order ? ' hot bad' : '')); });
+  const to = $('tb-oo'); to.replaceChildren();
+  oo.slice().sort((a, b) => b.amount - a.amount).forEach(r => { const tr = to.insertRow(); td(tr, r.item_no); td(tr, r.item); td(tr, r.status); td(tr, n0(Math.round(r.amount)), 'r'); td(tr, n0(r.on_order), 'r hot bad'); td(tr, n0(r.sales_mtd), 'r'); });
+}
+
+/* ---------- history ---------- */
+function drawHistory(){
+  const asc = weeks.slice().reverse(), tb = $('tb-hs'); tb.replaceChildren();
+  asc.forEach(w => { const t = totOf(w, w.week), md = d3.sum(['Critical','Obsolete','Full Provision'], s => stAmt(w, w.week, s)); const tr = tb.insertRow();
+    td(tr, wkY(w.week), 'hot'); td(tr, n0(t.amount_k), 'r'); td(tr, n2(t.pct) + '%', 'r'); td(tr, n0(t.sku), 'r'); td(tr, n0(md), 'r'); DIVS.forEach(d => td(tr, n0(Math.round(divAmt(w, w.week, d))), 'r')); td(tr, w.file, 'muted'); });
+  const el = $('c-hsup');
+  if (asc.length < 2 || !asc[0].items.length || !asc[asc.length - 1].items.length) { el.replaceChildren(); const p = document.createElement('p'); p.className = 'note'; p.textContent = 'ต้องมีอย่างน้อย 2 สัปดาห์ที่มีชีท Stock LY จึงจะเทียบได้'; el.appendChild(p); }
+  else {
+    const a = asc[0], b = asc[asc.length - 1];
+    $('hs-sup-n').textContent = 'บาท · ' + wk(a.week) + ' → ' + wk(b.week) + ' · สีเขียว = ลดลง · สีแดง = เพิ่มขึ้น';
+    const sa = new Map(d3.rollups(a.items, v => d3.sum(v, r => r.amount), r => r.supplier)), sb = new Map(d3.rollups(b.items, v => d3.sum(v, r => r.amount), r => r.supplier));
+    const all = [...new Set([...sa.keys(), ...sb.keys()])].map(s => ({s, d: (sb.get(s) || 0) - (sa.get(s) || 0)})).sort((x, y) => Math.abs(y.d) - Math.abs(x.d)).slice(0, 10);
+    const rowH = 28, H = 8 + all.length * rowH, [svg, Wd] = svgIn(el, H), l = Math.min(220, Wd * 0.42), mx = d3.max(all, o => Math.abs(o.d)) || 1;
+    const x = d3.scaleLinear([-mx, mx], [l + 12, Wd - 70]);
+    svg.append('line').attr('x1', x(0)).attr('x2', x(0)).attr('y1', 0).attr('y2', H).attr('stroke', css('--soft'));
+    const g = svg.selectAll('g').data(all).join('g').attr('transform', (o, i) => `translate(0,${4 + i * rowH})`);
+    g.append('text').attr('x', l).attr('y', rowH / 2 + 4).attr('text-anchor', 'end').attr('font-size', 12).attr('fill', css('--ink')).text(o => o.s.replace('บมจ.', '').replace('บจ.', '').trim().slice(0, 26));
+    g.append('rect').attr('x', o => Math.min(x(0), x(o.d))).attr('width', o => Math.abs(x(o.d) - x(0))).attr('y', 6).attr('height', rowH - 12).attr('rx', 3).attr('fill', o => o.d < 0 ? css('--good') : css('--bad'));
+    g.append('text').attr('x', o => o.d < 0 ? x(0) + 4 : x(o.d) + 4).attr('text-anchor', 'start').attr('y', rowH / 2 + 4).attr('font-size', 11).attr('fill', css('--soft')).text(o => sgn(Math.round(o.d)));
+  }
+  const ts = $('tb-stuck'); ts.replaceChildren();
+  if (weeks.length >= 2) {
+    const sets = asc.map(w => new Map((w.top30 || []).filter(r => r.list === 'All').map(r => [r.item_no, r])));
+    const first = sets[0], last = sets[sets.length - 1];
+    [...last.keys()].filter(k => sets.every(s => s.has(k))).map(k => ({f: first.get(k), l: last.get(k)})).sort((p, q) => q.l.amount - p.l.amount)
+      .forEach(o => { const tr = ts.insertRow(); td(tr, o.l.item_no); td(tr, o.l.item); td(tr, o.l.division); td(tr, (o.f.cw == null ? '' : n0(o.f.cw)) + ' → ' + (o.l.cw == null ? '' : n0(o.l.cw)), 'r'); td(tr, n0(Math.round(o.l.amount)), 'r'); });
+  }
+  if (!ts.rows.length) { const tr = ts.insertRow(); const c = tr.insertCell(); c.colSpan = 5; c.className = 'muted'; c.textContent = weeks.length < 2 ? 'ต้องมีอย่างน้อย 2 สัปดาห์' : 'ไม่มีสินค้าที่ติดทุกสัปดาห์'; }
+}
+
+function render(){
+  const w = W(); if (!w) return;
+  if (tab === 'ov') drawOverview(w); else drawOverview(w);
+  if (tab === 'dv') drawDivision(w);
+  if (tab === 'tp') drawTop(w);
+  if (tab === 'sp') drawSup();
+  if (tab === 'hs') drawHistory();
+}
+loadStore(); fillWeeks();
+if (typeof d3 === 'undefined') show('โหลดตัววาดกราฟไม่สำเร็จ ตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วเปิดใหม่', true);
+else render();
+})();
+</script>
+</body>
+</html>
