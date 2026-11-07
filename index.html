@@ -144,11 +144,12 @@ details{font-size:13px;color:var(--soft)}
       <div class="grid">
         <div class="card"><h2>ซัพพลายเออร์ที่มี Aging สูงสุด 10 อันดับ</h2><p class="note">บาท · ราคาทุน · คลิกแท่งเพื่อกรอง (คลิกซ้ำเพื่อยกเลิก)</p><div class="chart" id="c-sup"></div></div>
         <div class="card"><h2>ดูรายซัพพลายเออร์</h2>
-          <select id="sp-sel" aria-label="ซัพพลายเออร์"></select>
-          <p class="note">อายุสต็อก (Aging Day) · มูลค่าบาทในแต่ละช่วง</p><div class="chart" id="c-age"></div>
-          <p class="note">สัดส่วนสถานะ · มูลค่าบาท</p><div class="chart" id="c-mix"></div></div>
+          <div class="ctl"><select id="sp-sel" aria-label="ซัพพลายเออร์"></select>
+          <select id="sp-st" aria-label="สถานะ"><option value="">ทุกสถานะ</option><option value="AL">Alert</option><option value="AT">Attention</option><option value="CR">Critical</option><option value="OB">Obsolete</option><option value="FP">Full Provision</option></select></div>
+          <p class="note">อายุสต็อก (Aging Day) · มูลค่าบาทในแต่ละช่วง · กรองตามซัพพลายเออร์และสถานะ</p><div class="chart" id="c-age"></div>
+          <p class="note">สัดส่วนสถานะ · มูลค่าบาท · กรองตามซัพพลายเออร์</p><div class="chart" id="c-mix"></div></div>
       </div>
-      <div class="card"><h2 id="sp-items-h">รายการสินค้า</h2><p class="note">เรียงตามมูลค่า · ถ้ายังไม่เลือกซัพพลายเออร์จะแสดง 50 รายการแรก</p>
+      <div class="card"><h2 id="sp-items-h">รายการสินค้า</h2><p class="note" id="sp-items-n">เรียงตามมูลค่า</p>
         <div class="scroll"><table class="t"><thead><tr><th>รหัส</th><th>สินค้า</th><th>ซัพพลายเออร์</th><th>สถานะ</th><th class="r">จำนวน</th><th class="r">มูลค่า (บาท)</th><th class="r">อายุ (วัน)</th><th class="r">ขาย MTD</th><th class="r">ค้างสั่ง</th></tr></thead><tbody id="tb-sp"></tbody></table></div></div>
       <div class="card"><h2>สินค้าติด Aging ที่ยังมีของค้างสั่ง</h2><p class="note">ควรยกเลิกหรือชะลอ PO ก่อน</p>
         <div class="scroll"><table class="t"><thead><tr><th>รหัส</th><th>สินค้า</th><th>สถานะ</th><th class="r">มูลค่า (บาท)</th><th class="r">ค้างสั่ง</th><th class="r">ขาย MTD</th></tr></thead><tbody id="tb-oo"></tbody></table></div></div>
@@ -307,7 +308,7 @@ async function handleFile(f){
 }
 
 /* ---------- state + controls ---------- */
-let cur = null, tab = 'ov', SUP = '', TP = {key: 'amount', dir: -1};
+let cur = null, tab = 'ov', SUP = '', SST = '', TP = {key: 'amount', dir: -1};
 function W(){ return weeks.find(w => w.week === cur) || weeks[0]; }
 function fillWeeks(){
   const sel = $('week'); sel.replaceChildren(...weeks.map(w => new Option(wkY(w.week), w.week)));
@@ -346,6 +347,7 @@ document.querySelectorAll('#t-tp th.s').forEach(th => th.addEventListener('click
   drawTopTable();
 }));
 $('sp-sel').addEventListener('change', e => { SUP = e.target.value; drawSup(); });
+$('sp-st').addEventListener('change', e => { SST = e.target.value; drawSup(); });
 let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(render, 200); });
 
 /* ---------- helpers ---------- */
@@ -488,7 +490,9 @@ function drawSup(){
       .on('mousemove', (ev, d) => tipShow(el, ev, [d.s, n0(Math.round(d.amount)) + ' บาท · ' + d.n + ' SKU'])).on('mouseleave', () => tipHide(el))
       .on('click', (ev, d) => { SUP = SUP === d.s ? '' : d.s; drawSup(); });
   }
-  const rs = SUP ? it.filter(r => r.supplier === SUP) : it;
+  const rsSup = SUP ? it.filter(r => r.supplier === SUP) : it;
+  const rs = SST ? rsSup.filter(r => r.status === SST) : rsSup;
+  $('sp-st').value = SST;
   // age histogram
   const bins = [[0,60,'≤60'],[60,90,'61–90'],[90,120,'91–120'],[120,180,'121–180'],[180,365,'181–365'],[365,1e9,'>365']];
   const hd = bins.map(([a, b, lb]) => ({lb, v: d3.sum(rs.filter(r => r.aging_day > a && r.aging_day <= b), r => r.amount)}));
@@ -498,16 +502,18 @@ function drawSup(){
     svg.selectAll('text.v').data(hd).join('text').attr('class', 'v').attr('x', p => x(p.lb) + x.bandwidth() / 2).attr('y', p => y(p.v) - 6).attr('text-anchor', 'middle').attr('font-size', 11).attr('fill', css('--ink')).text(p => p.v ? short(p.v) : '');
     svg.selectAll('text.l').data(hd).join('text').attr('class', 'l').attr('x', p => x(p.lb) + x.bandwidth() / 2).attr('y', H - 7).attr('text-anchor', 'middle').attr('font-size', 11).attr('fill', css('--soft')).text(p => p.lb + ' วัน'); }
   // mix donut
-  { const md2 = Object.keys(CODE).map((c2, i) => ({n: CODE[c2], i, v: d3.sum(rs.filter(r => r.status === c2), r => r.amount)})).filter(p => p.v > 0), tt = d3.sum(md2, p => p.v) || 1;
+  { const md2 = Object.keys(CODE).map((c2, i) => ({n: CODE[c2], i, v: d3.sum(rsSup.filter(r => r.status === c2), r => r.amount)})).filter(p => p.v > 0), tt = d3.sum(md2, p => p.v) || 1;
     const el3 = $('c-mix'), H = 200, [svg, Wd] = svgIn(el3, H), R = Math.max(40, Math.min(Wd / 2 - 100, 85));
     const g = svg.append('g').attr('transform', `translate(${R + 10},${H / 2})`);
     g.selectAll('path').data(d3.pie().sort(null).value(p => p.v)(md2)).join('path').attr('d', d3.arc().innerRadius(R * 0.58).outerRadius(R)).attr('fill', a => STC[a.data.i]).attr('stroke', css('--card')).attr('stroke-width', 2);
     g.append('text').attr('text-anchor', 'middle').attr('y', 5).attr('font-size', 13).attr('fill', css('--ink')).text(short(tt));
     const lg = svg.append('g').attr('transform', `translate(${2 * R + 28},${H / 2 - md2.length * 11})`);
     md2.forEach((p, k2) => { const r = lg.append('g').attr('transform', `translate(0,${k2 * 22})`); r.append('rect').attr('width', 10).attr('height', 10).attr('rx', 2).attr('fill', STC[p.i]); r.append('text').attr('x', 16).attr('y', 9).attr('font-size', 11).attr('fill', css('--ink')).text(p.n + ' ' + Math.round(p.v / tt * 100) + '%'); }); }
-  $('sp-items-h').textContent = SUP ? 'รายการสินค้าของ ' + SUP : 'รายการสินค้า (ทุกซัพพลายเออร์)';
+  $('sp-items-h').textContent = 'รายการสินค้า' + (SST ? ' สถานะ ' + CODE[SST] : '') + (SUP ? ' ของ ' + SUP : ' (ทุกซัพพลายเออร์)');
+  const lim = (SUP || SST) ? 2000 : 50;
+  $('sp-items-n').textContent = n0(rs.length) + ' รายการ · มูลค่ารวม ' + n0(Math.round(d3.sum(rs, r => r.amount))) + ' บาท · เรียงตามมูลค่า' + (rs.length > lim ? ' · แสดง ' + lim + ' รายการแรก (เลือกสถานะหรือซัพพลายเออร์เพื่อดูทั้งหมด)' : '');
   const tb = $('tb-sp'); tb.replaceChildren();
-  rs.slice().sort((a, b) => b.amount - a.amount).slice(0, SUP ? 1000 : 50).forEach(r => { const tr = tb.insertRow(); td(tr, r.item_no); td(tr, r.item); td(tr, r.supplier.replace('บมจ.', '').replace('บจ.', '').trim()); td(tr, r.status); td(tr, n0(r.qty), 'r'); td(tr, n0(Math.round(r.amount)), 'r'); td(tr, n0(r.aging_day), 'r'); td(tr, n0(r.sales_mtd), 'r' + (!r.sales_mtd ? ' hot bad' : '')); td(tr, r.on_order ? n0(r.on_order) : '', 'r' + (r.on_order ? ' hot bad' : '')); });
+  rs.slice().sort((a, b) => b.amount - a.amount).slice(0, lim).forEach(r => { const tr = tb.insertRow(); td(tr, r.item_no); td(tr, r.item); td(tr, r.supplier.replace('บมจ.', '').replace('บจ.', '').trim()); td(tr, r.status); td(tr, n0(r.qty), 'r'); td(tr, n0(Math.round(r.amount)), 'r'); td(tr, n0(r.aging_day), 'r'); td(tr, n0(r.sales_mtd), 'r' + (!r.sales_mtd ? ' hot bad' : '')); td(tr, r.on_order ? n0(r.on_order) : '', 'r' + (r.on_order ? ' hot bad' : '')); });
   const to = $('tb-oo'); to.replaceChildren();
   oo.slice().sort((a, b) => b.amount - a.amount).forEach(r => { const tr = to.insertRow(); td(tr, r.item_no); td(tr, r.item); td(tr, r.status); td(tr, n0(Math.round(r.amount)), 'r'); td(tr, n0(r.on_order), 'r hot bad'); td(tr, n0(r.sales_mtd), 'r'); });
 }
