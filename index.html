@@ -46,13 +46,34 @@ header select{background:rgba(255,255,255,.95);border:0}
 .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .tip{position:absolute;pointer-events:none;background:var(--card);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.12);padding:6px 10px;font-size:12px;white-space:nowrap;z-index:3}
 .tip .h{color:var(--soft)}
-table.t{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
-table.t th{text-align:left;font-weight:600;padding:7px 9px;border-bottom:1px solid var(--line);position:sticky;top:0;background:color-mix(in srgb,var(--acc) 16%,var(--card));cursor:default}
-table.t th.s{cursor:pointer}
-table.t td{padding:6px 9px;border-bottom:1px solid var(--line);vertical-align:top}
-table.t tbody tr:nth-child(even){background:color-mix(in srgb,var(--acc) 5%,transparent)}
-.r{text-align:right}
-.scroll{max-height:30rem;overflow:auto}
+table.t{width:100%;border-collapse:separate;border-spacing:0;font-size:13.5px;font-variant-numeric:tabular-nums}
+table.t th{text-align:center;font-weight:600;font-size:12.5px;line-height:1.35;padding:10px 10px;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:1;background:color-mix(in srgb,var(--acc) 14%,var(--card));color:color-mix(in srgb,var(--acc) 55%,var(--ink));cursor:default}
+table.t th.s{cursor:pointer;user-select:none}
+table.t th.s:hover{background:color-mix(in srgb,var(--acc) 24%,var(--card))}
+table.t th.s[data-dir]::after{content:' ▾';font-size:11px}
+table.t th.s[data-dir="1"]::after{content:' ▴'}
+table.t td{text-align:center;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.t tbody tr:nth-child(even){background:color-mix(in srgb,var(--acc) 4%,transparent)}
+table.t tbody tr{transition:background .12s}
+table.t tbody tr:hover{background:color-mix(in srgb,var(--acc) 12%,transparent)}
+table.t tbody tr:last-child td{border-bottom:0}
+table.t .r{text-align:center}
+table.t td:not(.nm){white-space:nowrap}
+table.t th.nm,table.t td.nm{text-align:left}
+table.t td.nm{font-weight:500;max-width:24rem}
+#tb-stuck td:nth-child(2){text-align:left;font-weight:500}
+.scroll{max-height:32rem;overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.pill{display:inline-block;min-width:2.6em;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600;line-height:1.5;letter-spacing:.02em}
+.p-AL{background:#FBE9CF;color:#7A4A12}.p-AT{background:#F6C28F;color:#6B3608}.p-CR{background:#E0702F;color:#fff}.p-OB{background:#B9461C;color:#fff}.p-FP{background:#6E2711;color:#fff}
+.new{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:600;line-height:1.6;color:#fff;background:linear-gradient(120deg,#2F8580,#3E6A9A);vertical-align:1px;white-space:nowrap}
+.bar{display:block;height:4px;border-radius:99px;margin:4px auto 0;background:linear-gradient(90deg,color-mix(in srgb,var(--acc) 45%,transparent),var(--acc))}
+.chk{display:inline-flex;align-items:center;gap:7px;font-size:14px;padding:6px 13px;border-radius:999px;border:1px solid var(--line);background:var(--card);cursor:pointer;user-select:none}
+.chk:has(input:checked){border-color:var(--acc);background:color-mix(in srgb,var(--acc) 14%,var(--card));font-weight:600}
+.chk:has(input:disabled){opacity:.55;cursor:not-allowed}
+.chk input{accent-color:var(--acc);margin:0}
+.card{box-shadow:0 1px 2px rgba(20,30,50,.04),0 6px 18px rgba(20,30,50,.05)}
+select,input[type=search]{transition:border-color .12s,box-shadow .12s}
+select:focus,input[type=search]:focus{outline:0;border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 22%,transparent)}
 .empty{padding:40px 20px;text-align:center;color:var(--soft);display:flex;flex-direction:column;gap:12px;align-items:center}
 .empty .btn{background:var(--t1);color:#fff;border:0}
 details{font-size:13px;color:var(--soft)}
@@ -116,20 +137,28 @@ details{font-size:13px;color:var(--soft)}
       <div class="card"><h2>สัดส่วนมูลค่าแต่ละแผนก สัปดาห์นี้</h2><p class="note">พันบาท · แท่งแบ่งตามสถานะ</p><div class="legend" id="lg2"></div><div class="chart" id="c-dshare"></div></div>
       <div class="card"><h2>เปลี่ยนแปลงรายแผนก × สถานะ</h2><p class="note">พันบาท · สัปดาห์ก่อน → สัปดาห์นี้</p>
         <table class="t"><thead><tr><th>แผนก</th><th class="r">Alert</th><th class="r">Attention</th><th class="r">Critical</th><th class="r">Obsolete</th><th class="r">Full Provision</th><th class="r">รวม</th><th class="r">ยอดสัปดาห์นี้</th></tr></thead><tbody id="tb-dv"></tbody></table></div>
+      <div class="card"><h2>มูลค่าแยกตามแผนกย่อย (Department)</h2>
+        <div class="ctl"><select id="dv-div" aria-label="แผนก"><option value="">ทุกแผนก</option><option>Dry Food</option><option>Non Food</option><option>Fresh Food</option></select></div>
+        <p class="note" id="dv-dept-n"></p>
+        <div class="scroll"><table class="t"><thead><tr><th>แผนก</th><th>แผนกย่อย</th><th class="r">Alert</th><th class="r">Attention</th><th class="r">Critical</th><th class="r">Obsolete</th><th class="r">Full Provision</th><th class="r">รวม (บาท)</th><th class="r">SKU</th><th class="r">เทียบสัปดาห์ก่อน</th></tr></thead><tbody id="tb-dept"></tbody></table></div></div>
       <div class="card"><h2>แนวโน้มรายแผนก</h2><p class="note">พันบาท · แต่ละกราฟใช้สเกลของตัวเอง</p><div class="grid" id="c-dsm"></div></div>
     </section>
 
     <section class="pg" data-page="tp" data-c="t3" hidden>
       <div class="card"><h2>Top 30 รายการ เทียบสัปดาห์ก่อน</h2>
         <div class="ctl">
-          <select id="tp-div"><option>Dry Food</option><option>Non Food</option><option>Fresh Food</option></select>
-          <select id="tp-list"><option value="All">ทุกสถานะ</option><option value="Critical">Critical</option><option value="Obsolete">Obsolete</option><option value="FullProvision">Full Provision</option></select>
+          <select id="tp-div" aria-label="แผนก"><option>Dry Food</option><option>Non Food</option><option>Fresh Food</option></select>
+          <select id="tp-dept" aria-label="แผนกย่อย"></select>
+          <select id="tp-list"><option value="All">ทุกสถานะ</option><option value="ALAT">Alert + Attention</option><option value="AL">Alert</option><option value="AT">Attention</option><option value="Critical">Critical</option><option value="Obsolete">Obsolete</option><option value="FullProvision">Full Provision</option></select>
+          <label class="chk"><input type="checkbox" id="tp-new">เฉพาะรายการใหม่</label>
           <input type="search" id="tp-q" placeholder="ค้นหาชื่อหรือรหัสสินค้า">
         </div>
         <p class="note" id="tp-sum"></p>
         <div class="chart" id="c-tp"></div>
         <p class="note">10 อันดับแรกตามมูลค่า · <span class="bad hot">แท่งแดง</span> = สต็อกไม่ขยับ · แท่งม่วง = มีการขาย</p>
-        <div class="scroll"><table class="t" id="t-tp"><thead><tr><th class="s" data-k="item_no">รหัส</th><th class="s" data-k="item">สินค้า</th><th class="s" data-k="status">สถานะ</th><th class="s r" data-k="lw">สต็อกสัปดาห์ก่อน</th><th class="s r" data-k="cw">สต็อกล่าสุด</th><th class="s r" data-k="diff">เปลี่ยนแปลง</th><th class="s r" data-k="amount">มูลค่า (บาท)</th><th class="r">ติด Top 30 (สัปดาห์)</th></tr></thead><tbody id="tb-tp"></tbody></table></div>
+        <div class="scroll"><table class="t" id="t-tp"><thead><tr><th class="s" data-k="item_no">รหัส</th><th class="s nm" data-k="item">สินค้า</th><th class="s" data-k="dept">แผนกย่อย</th><th class="s" data-k="status">สถานะ</th><th class="s r" data-k="lw">สต็อกสัปดาห์ก่อน</th><th class="s r" data-k="cw">สต็อกล่าสุด</th><th class="s r" data-k="diff">เปลี่ยนแปลง</th><th class="s r" data-k="amount">มูลค่ารวม (บาท)</th><th class="s r" data-k="ucost">ทุนต่อหน่วย (บาท)</th><th class="s r" data-k="unit">ราคาขายต่อหน่วย (บาท)</th><th class="r">ติด Top 30 (สัปดาห์)</th></tr></thead><tbody id="tb-tp"></tbody></table></div>
+        <p class="note">มูลค่ารวม = ราคาทุน × สต็อกล่าสุด · ทุนต่อหน่วย = มูลค่ารวม ÷ สต็อกล่าสุด · ราคาขายต่อหน่วย = ช่อง Unit Price ในไฟล์</p>
+        <p class="note">ป้าย <span class="new" style="margin-left:0">ใหม่</span> ในหน้านี้ = สัปดาห์ก่อนสต็อกเป็น 0 และสัปดาห์นี้มีสต็อก (เพิ่งเข้า Aging หรือมีของเข้าใหม่)</p>
         <p class="note">เปลี่ยนแปลง: ติดลบ = ขายออก · 0 = ไม่ขยับ · บวก = เพิ่งเข้า Aging หรือมีของเข้า · "ติด Top 30" นับจากสัปดาห์ที่เก็บไว้ในเครื่องนี้</p>
       </div>
     </section>
@@ -144,16 +173,16 @@ details{font-size:13px;color:var(--soft)}
       <div class="grid">
         <div class="card"><h2>ซัพพลายเออร์ที่มี Aging สูงสุด 10 อันดับ</h2><p class="note">บาท · ราคาทุน · คลิกแท่งเพื่อกรอง (คลิกซ้ำเพื่อยกเลิก)</p><div class="chart" id="c-sup"></div></div>
         <div class="card"><h2>ดูรายซัพพลายเออร์</h2>
-          <div class="ctl"><select id="sp-div" aria-label="แผนก"><option value="">ทุกแผนก</option><option>Dry Food</option><option>Non Food</option><option>Fresh Food</option></select><select id="sp-sel" aria-label="ซัพพลายเออร์"></select>
-          <select id="sp-st" aria-label="สถานะ"><option value="">ทุกสถานะ</option><option value="AL">Alert</option><option value="AT">Attention</option><option value="CR">Critical</option><option value="OB">Obsolete</option><option value="FP">Full Provision</option></select></div>
+          <div class="ctl"><select id="sp-div" aria-label="แผนก"><option value="">ทุกแผนก</option><option>Dry Food</option><option>Non Food</option><option>Fresh Food</option></select><select id="sp-dept" aria-label="แผนกย่อย"></select><select id="sp-sel" aria-label="ซัพพลายเออร์"></select>
+          <select id="sp-st" aria-label="สถานะ"><option value="">ทุกสถานะ</option><option value="AL+AT">Alert + Attention</option><option value="AL">Alert</option><option value="AT">Attention</option><option value="CR">Critical</option><option value="OB">Obsolete</option><option value="FP">Full Provision</option></select><label class="chk"><input type="checkbox" id="sp-new"><span id="sp-new-l">เฉพาะรายการใหม่</span></label></div>
           <p class="note" id="sp-mix"></p>
           <p class="note">อายุสต็อก (Aging Day) · มูลค่าบาทในแต่ละช่วง · กรองตามซัพพลายเออร์และสถานะ</p><div class="chart" id="c-age"></div>
           <p class="note">สัดส่วนสถานะ · มูลค่าบาท · กรองตามซัพพลายเออร์</p><div class="chart" id="c-mix"></div></div>
       </div>
       <div class="card"><h2 id="sp-items-h">รายการสินค้า</h2><p class="note" id="sp-items-n">เรียงตามมูลค่า</p>
-        <div class="scroll"><table class="t"><thead><tr><th>รหัส</th><th>สินค้า</th><th>ซัพพลายเออร์</th><th>แผนก</th><th class="r">Dept</th><th>สถานะ</th><th class="r">จำนวน</th><th class="r">มูลค่า (บาท)</th><th class="r">อายุ (วัน)</th><th class="r">ขาย MTD</th><th class="r">ค้างสั่ง</th></tr></thead><tbody id="tb-sp"></tbody></table></div></div>
+        <div class="scroll"><table class="t"><thead><tr><th>รหัส</th><th class="nm">สินค้า</th><th class="nm">ซัพพลายเออร์</th><th>แผนก</th><th>แผนกย่อย</th><th>สถานะ</th><th class="r">จำนวน</th><th class="r">มูลค่ารวม (บาท)</th><th class="r">ทุนต่อหน่วย</th><th class="r">ราคาขายต่อหน่วย</th><th class="r">อายุ (วัน)</th><th class="r">ขาย MTD</th><th class="r">ค้างสั่ง</th></tr></thead><tbody id="tb-sp"></tbody></table></div></div>
       <div class="card"><h2>สินค้าติด Aging ที่ยังมีของค้างสั่ง</h2><p class="note">ควรยกเลิกหรือชะลอ PO ก่อน</p>
-        <div class="scroll"><table class="t"><thead><tr><th>รหัส</th><th>สินค้า</th><th>แผนก</th><th>สถานะ</th><th class="r">มูลค่า (บาท)</th><th class="r">ค้างสั่ง</th><th class="r">ขาย MTD</th></tr></thead><tbody id="tb-oo"></tbody></table></div></div>
+        <div class="scroll"><table class="t"><thead><tr><th>รหัส</th><th class="nm">สินค้า</th><th>แผนก</th><th>สถานะ</th><th class="r">มูลค่า (บาท)</th><th class="r">ค้างสั่ง</th><th class="r">ขาย MTD</th></tr></thead><tbody id="tb-oo"></tbody></table></div></div>
     </section>
 
     <section class="pg" data-page="hs" data-c="t5" hidden>
@@ -163,13 +192,14 @@ details{font-size:13px;color:var(--soft)}
       <div class="grid">
         <div class="card"><h2>ซัพพลายเออร์ที่เปลี่ยนมากที่สุด</h2><p class="note" id="hs-sup-n">บาท · สัปดาห์เก่าสุด → ใหม่สุด ที่เก็บไว้</p><div class="chart" id="c-hsup"></div></div>
         <div class="card"><h2>สินค้าที่ติด Top 30 ทุกสัปดาห์ที่เก็บไว้</h2><p class="note">ค้างนานที่สุด ควรหาวิธีระบายใหม่</p>
-          <div class="scroll"><table class="t"><thead><tr><th>รหัส</th><th>สินค้า</th><th>แผนก</th><th class="r">สต็อกแรก → ล่าสุด</th><th class="r">มูลค่าล่าสุด (บาท)</th></tr></thead><tbody id="tb-stuck"></tbody></table></div></div>
+          <div class="scroll"><table class="t"><thead><tr><th>รหัส</th><th class="nm">สินค้า</th><th>แผนก</th><th class="r">สต็อกแรก → ล่าสุด</th><th class="r">มูลค่าล่าสุด (บาท)</th></tr></thead><tbody id="tb-stuck"></tbody></table></div></div>
       </div>
     </section>
 
     <details><summary>คำอธิบายและข้อควรรู้</summary>
       <p>Alert / Attention = เริ่มขายช้า ยังไม่ต้องลดราคา · Critical / Obsolete / Full Provision = เข้าเกณฑ์ลดราคา 20% / 40% / 70% ตาม SM 014-001</p>
       <p>ข้อมูลเก็บไว้ในเบราว์เซอร์ของเครื่องนี้เท่านั้น ถ้าล้างประวัติเบราว์เซอร์หรือเปิดจากเครื่องอื่นจะต้องอัปโหลดใหม่ ปุ่ม "บันทึกเป็นไฟล์สำหรับส่งต่อ" จะสร้างไฟล์ HTML ที่มีข้อมูลสัปดาห์ที่เก็บไว้ติดไปด้วย ส่งให้คนอื่นเปิดดูได้</p>
+      <p>แผนกย่อยของ Fresh Food แปลงจาก Department Number ในไฟล์: 1 = Fruit &amp; Vegetable, 2 = Butchery, 3 = Fish, 4 = Bakery, 5 = Dairy &amp; Frozen · Dry Food และ Non Food แสดงเป็นเลข Dept · สัปดาห์ที่อัปโหลดไว้ก่อนเวอร์ชันนี้ต้องอัปโหลดไฟล์ซ้ำอีกครั้ง จึงจะมีแผนกย่อยและราคาต่อหน่วยในหน้า Top 30</p>
       <p>หน้ารายซัพพลายเออร์ใช้ชีท Stock LY และหน้า Top 30 ใช้ชีท COMPARE ITEM ของไฟล์ที่อัปโหลด</p>
     </details>
   </div>
@@ -186,6 +216,11 @@ const ST = ['Alert','Attention','Critical','Obsolete','Full Provision'];
 const STC = ['#F6D3A8','#EFA463','#E0702F','#B9461C','#6E2711'];
 const CODE = {AL:'Alert',AT:'Attention',CR:'Critical',OB:'Obsolete',FP:'Full Provision'};
 const DIVS = ['Dry Food','Non Food','Fresh Food'];
+const FDEPT = {'1':'Fruit & Vegetable','2':'Butchery','3':'Fish','4':'Bakery','5':'Dairy & Frozen'};
+const deptName = (dv, d) => (d === '' || d == null) ? '' : (dv === 'Fresh Food' && FDEPT[d]) ? FDEPT[d] : 'Dept ' + d;
+const deptList = (dv, rows) => { const s = new Set(rows.filter(r => r.division === dv && r.dept !== '' && r.dept != null).map(r => String(r.dept))); if (dv === 'Fresh Food') Object.keys(FDEPT).forEach(k => s.add(k)); return [...s].sort((a, b) => a - b); };
+const TPV = {ALAT: ['AL','AT'], AL: ['AL'], AT: ['AT']};
+const STL = c => c === 'AL+AT' ? 'Alert + Attention' : CODE[c];
 const MD = {'Critical':0.2,'Obsolete':0.4,'Full Provision':0.7};
 const TH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 const $ = id => document.getElementById(id);
@@ -272,7 +307,7 @@ function parseTop30(ws){
         const key = String(v[4]); if (seen.has(key)) continue; seen.add(key);
         const lw = num(v[7]), cw = num(v[8]); let diff = num(v[9]);
         if (diff == null && lw != null && cw != null) diff = cw - lw;
-        out.push({division: dv, list: l, item_no: key, item: String(v[5] || ''), status: String(v[6] || ''), lw, cw, diff, amount: +num(v[11]).toFixed(2)});
+        out.push({division: dv, list: l, dept: num(v[2]) == null ? '' : String(num(v[2])), unit: num(v[10]), item_no: key, item: String(v[5] || ''), status: String(v[6] || ''), lw, cw, diff, amount: +num(v[11]).toFixed(2)});
       }
     });
   });
@@ -285,7 +320,7 @@ function parseItems(ws){
     .filter(r => r['Item Number'] != null && r['Amount'] != null)
     .map(r => ({division: String(r['Division'] || '').trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase()), dept: r['Department Number'] == null ? '' : String(r['Department Number']), supplier: String(r['Supplier'] || '').trim(), item_no: String(r['Item Number']), item: String(r['Item'] || ''),
       status: String(r['Aging Status ID'] || '').trim(), qty: num(r['Qty']) || 0, amount: +(+r['Amount']).toFixed(2), aging_day: num(r['Aging Day']) || 0,
-      on_order: num(r['On Order Qty']) || 0, sales_mtd: num(r['Net Sales Qty MTD']) || 0, wac: num(r['WAC']) || 0}));
+      on_order: num(r['On Order Qty']) || 0, sales_mtd: num(r['Net Sales Qty MTD']) || 0, wac: num(r['WAC']) || 0, sp: num(r['Selling Price'])}));
 }
 async function handleFile(f){
   show('กำลังอ่านไฟล์ ' + f.name + ' …');
@@ -309,7 +344,7 @@ async function handleFile(f){
 }
 
 /* ---------- state + controls ---------- */
-let cur = null, tab = 'ov', SUP = '', SST = '', SDV = '', TP = {key: 'amount', dir: -1};
+let cur = null, tab = 'ov', SUP = '', SST = '', SDV = '', SDP = '', TDP = '', DDV = '', TNEW = false, SNEW = false, TP = {key: 'amount', dir: -1};
 function W(){ return weeks.find(w => w.week === cur) || weeks[0]; }
 function fillWeeks(){
   const sel = $('week'); sel.replaceChildren(...weeks.map(w => new Option(wkY(w.week), w.week)));
@@ -341,15 +376,21 @@ document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () =>
   document.querySelectorAll('section.pg').forEach(s => s.hidden = s.dataset.page !== tab);
   render();
 }));
-['tp-div','tp-list'].forEach(id => $(id).addEventListener('change', () => render()));
+$('tp-div').addEventListener('change', () => { TDP = ''; render(); });
+$('tp-list').addEventListener('change', () => render());
+$('tp-dept').addEventListener('change', e => { TDP = e.target.value; render(); });
+$('tp-new').addEventListener('change', e => { TNEW = e.target.checked; render(); });
+$('sp-new').addEventListener('change', e => { SNEW = e.target.checked; drawSup(); });
+$('sp-dept').addEventListener('change', e => { SDP = e.target.value; SUP = ''; drawSup(); });
+$('dv-div').addEventListener('change', e => { DDV = e.target.value; drawDept(W()); });
 $('tp-q').addEventListener('input', () => drawTopTable());
 document.querySelectorAll('#t-tp th.s').forEach(th => th.addEventListener('click', () => {
-  const k = th.dataset.k; if (TP.key === k) TP.dir *= -1; else { TP.key = k; TP.dir = ['item','item_no','status'].includes(k) ? 1 : -1; }
+  const k = th.dataset.k; if (TP.key === k) TP.dir *= -1; else { TP.key = k; TP.dir = ['item','item_no','status','dept'].includes(k) ? 1 : -1; }
   drawTopTable();
 }));
 $('sp-sel').addEventListener('change', e => { SUP = e.target.value; drawSup(); });
 $('sp-st').addEventListener('change', e => { SST = e.target.value; drawSup(); });
-$('sp-div').addEventListener('change', e => { SDV = e.target.value; SUP = ''; drawSup(); });
+$('sp-div').addEventListener('change', e => { SDV = e.target.value; SDP = ''; SUP = ''; drawSup(); });
 let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(render, 200); });
 
 /* ---------- helpers ---------- */
@@ -358,6 +399,10 @@ function svgIn(el, H){ el.replaceChildren(); const W0 = el.clientWidth || 600; c
 function tipOf(el){ let t = el.querySelector('.tip'); if (!t) { t = document.createElement('div'); t.className = 'tip'; t.hidden = true; el.appendChild(t); } return t; }
 function tipShow(el, ev, lines){ const t = tipOf(el); t.replaceChildren(); lines.forEach((l, i) => { const d = document.createElement('div'); if (i === 0) d.className = 'h'; if (Array.isArray(l)) { const sw = document.createElement('i'); sw.style.cssText = 'display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;background:' + l[0]; d.append(sw, l[1]); } else d.textContent = l; t.appendChild(d); }); const [x, y] = d3.pointer(ev, el); t.hidden = false; t.style.left = Math.max(0, Math.min(el.clientWidth - t.offsetWidth, x + 12)) + 'px'; t.style.top = Math.max(0, y - 10) + 'px'; }
 const tipHide = el => { const t = el.querySelector('.tip'); if (t) t.hidden = true; };
+function pill(tr, code){ const x = tr.insertCell(); if (code) { const sp = document.createElement('span'); sp.className = 'pill p-' + code; sp.textContent = code; sp.title = CODE[code] || code; x.appendChild(sp); } return x; }
+function nameTd(tr, text, isNew){ const x = tr.insertCell(); x.className = 'nm'; x.textContent = text; if (isNew) { const b = document.createElement('span'); b.className = 'new'; b.textContent = 'ใหม่'; x.appendChild(b); } return x; }
+function barTd(tr, v, max){ const x = tr.insertCell(); const d = document.createElement('div'); d.textContent = n0(Math.round(v)); const b = document.createElement('i'); b.className = 'bar'; b.style.width = Math.max(3, Math.round(v / (max || 1) * 100)) + '%'; x.append(d, b); return x; }
+const isNewT = r => !r.lw && r.cw > 0;
 function td(tr, text, c){ const x = tr.insertCell(); x.textContent = text; if (c) x.className = c; return x; }
 function grid(svg, y, x0, x1, ticks, fmt){ svg.append('g').selectAll('line').data(y.ticks(ticks)).join('line').attr('x1', x0).attr('x2', x1).attr('y1', d => y(d)).attr('y2', d => y(d)).attr('stroke', css('--line')); svg.append('g').selectAll('text').data(y.ticks(ticks)).join('text').attr('x', x0 - 6).attr('y', d => y(d) + 4).attr('text-anchor', 'end').attr('font-size', 11).attr('fill', css('--soft')).text(fmt); }
 function weeksIn(w){ return [...new Set(w.summary.total.map(t => t.week))].sort(); }
@@ -426,6 +471,7 @@ function drawDivision(w){
   const tb = $('tb-dv'); tb.replaceChildren();
   order.forEach(dv => { const tr = tb.insertRow(); td(tr, dv, 'hot'); ST.forEach(s => { const v = pw ? +(divAmt(w, cw, dv, s) - divAmt(w, pw, dv, s)).toFixed(1) : 0; td(tr, pw ? (v === 0 ? '0' : sgn(v)) : '—', 'r ' + cls(v)); });
     const t = pw ? +(divAmt(w, cw, dv) - divAmt(w, pw, dv)).toFixed(1) : 0; td(tr, pw ? sgn(t) : '—', 'r hot ' + cls(t)); td(tr, n0(Math.round(divAmt(w, cw, dv))), 'r'); });
+  drawDept(w);
   const box = $('c-dsm'); box.replaceChildren();
   order.forEach(dv => {
     const wrap = document.createElement('div'); const p = document.createElement('p'); p.className = 'note'; p.textContent = dv; const c = document.createElement('div'); c.className = 'chart'; wrap.append(p, c); box.appendChild(wrap);
@@ -441,11 +487,37 @@ function drawDivision(w){
   });
 }
 
+function drawDept(w){
+  if (!w) return; const it = w.items || [], tb = $('tb-dept'); tb.replaceChildren(); $('dv-div').value = DDV;
+  const prev = weeks.filter(x => x.week < w.week && (x.items || []).length).sort((a, b) => a.week < b.week ? 1 : -1)[0];
+  $('dv-dept-n').textContent = it.length ? 'บาท · ราคาทุน · จากชีท Stock LY (รายสินค้า) ของสัปดาห์ ' + wkY(w.week) + ' ยอดอาจไม่เท่า Compare Summary พอดี · ' + (prev ? 'เทียบกับสัปดาห์ ' + wk(prev.week) + ' ที่เก็บไว้ในเครื่อง' : 'ยังไม่มีสัปดาห์ก่อนหน้าเก็บไว้ จึงยังเทียบไม่ได้') : 'ไฟล์สัปดาห์นี้ไม่มีชีท Stock LY จึงแยกแผนกย่อยไม่ได้';
+  if (!it.length) return;
+  const sumOf = (rows, dv, d, c) => d3.sum(rows.filter(r => r.division === dv && String(r.dept) === d && (!c || r.status === c)), r => r.amount);
+  DIVS.filter(dv => !DDV || dv === DDV).forEach(dv => {
+    const ds = deptList(dv, it); let first = true;
+    const tot = {n: 0, t: 0, p: 0}; const cs = Object.keys(CODE).map(() => 0);
+    ds.forEach(d => { const tr = tb.insertRow(); td(tr, first ? dv : '', 'hot'); first = false; td(tr, deptName(dv, d));
+      Object.keys(CODE).forEach((c, i) => { const v = sumOf(it, dv, d, c); cs[i] += v; td(tr, v ? n0(Math.round(v)) : '', 'r'); });
+      const t = sumOf(it, dv, d), n = it.filter(r => r.division === dv && String(r.dept) === d).length, pv = prev ? sumOf(prev.items, dv, d) : 0, df = Math.round(t - pv);
+      tot.n += n; tot.t += t; tot.p += pv;
+      td(tr, n0(Math.round(t)), 'r hot'); td(tr, n ? n0(n) : '', 'r'); td(tr, prev ? (df === 0 ? '0' : sgn(df)) : '—', 'r ' + (prev ? cls(df) : 'muted')); });
+    const tr = tb.insertRow(); td(tr, '', ''); td(tr, 'รวม ' + dv, 'hot'); cs.forEach(v => td(tr, n0(Math.round(v)), 'r hot'));
+    const df = Math.round(tot.t - tot.p); td(tr, n0(Math.round(tot.t)), 'r hot'); td(tr, n0(tot.n), 'r hot'); td(tr, prev ? (df === 0 ? '0' : sgn(df)) : '—', 'r hot ' + (prev ? cls(df) : 'muted'));
+  });
+}
+
 /* ---------- top 30 ---------- */
-function topRows(w){ return (w.top30 || []).filter(r => r.division === $('tp-div').value && r.list === $('tp-list').value); }
+function topRows(w){ const l = $('tp-list').value, f = TPV[l]; return (w.top30 || []).filter(r => r.division === $('tp-div').value && r.list === (f ? 'All' : l) && (!f || f.includes(r.status)) && (!TDP || String(r.dept) === TDP) && (!TNEW || isNewT(r))); }
+function fillTopDept(w){
+  const dv = $('tp-div').value, has = (w.top30 || []).some(r => r.dept !== undefined), sel = $('tp-dept');
+  const ds = has ? deptList(dv, w.top30 || []) : [];
+  if (!ds.includes(TDP)) TDP = '';
+  sel.replaceChildren(new Option(has ? 'ทุกแผนกย่อย' : 'ทุกแผนกย่อย (อัปโหลดไฟล์ซ้ำเพื่อกรอง)', ''), ...ds.map(d => new Option(deptName(dv, d), d))); sel.value = TDP; sel.disabled = !has;
+}
 function drawTop(w){
-  const rows = topRows(w), z = rows.filter(r => r.diff === 0);
-  $('tp-sum').textContent = rows.length ? 'ไม่มีการขายเลยในสัปดาห์นี้ (สต็อกเท่าเดิม) ' + z.length + ' จาก ' + rows.length + ' รายการ มูลค่า ' + n0(Math.round(d3.sum(z, r => r.amount))) + ' บาท จากทั้งหมด ' + n0(Math.round(d3.sum(rows, r => r.amount))) + ' บาท' : 'ไม่มีข้อมูล Top 30 ของกลุ่มนี้ในไฟล์';
+  fillTopDept(w);
+  const rows = topRows(w), z = rows.filter(r => r.diff === 0), sub = TPV[$('tp-list').value] || TDP || TNEW, nw = rows.filter(isNewT);
+  $('tp-sum').textContent = rows.length ? 'ไม่มีการขายเลยในสัปดาห์นี้ (สต็อกเท่าเดิม) ' + z.length + ' จาก ' + rows.length + ' รายการ มูลค่า ' + n0(Math.round(d3.sum(z, r => r.amount))) + ' บาท จากทั้งหมด ' + n0(Math.round(d3.sum(rows, r => r.amount))) + ' บาท' + (nw.length && !TNEW ? ' · รายการใหม่ ' + nw.length + ' รายการ มูลค่า ' + n0(Math.round(d3.sum(nw, r => r.amount))) + ' บาท' : '') + (sub ? ' · กรองจากรายการ Top 30 ของทั้งแผนกในไฟล์ จึงอาจมีไม่ครบ 30 รายการ ดูครบทุกรายการได้ที่หน้ารายซัพพลายเออร์' : '') : (sub ? 'ไม่มีรายการของกลุ่มนี้ติด Top 30 ของแผนกในไฟล์ ดูครบทุกรายการได้ที่หน้ารายซัพพลายเออร์' : 'ไม่มีข้อมูล Top 30 ของกลุ่มนี้ในไฟล์');
   const d = rows.slice().sort((a, b) => b.amount - a.amount).slice(0, 10), el = $('c-tp');
   if (!d.length) { el.replaceChildren(); } else {
     const rowH = 28, H = 8 + d.length * rowH, [svg, Wd] = svgIn(el, H), l = Math.min(270, Wd * 0.45);
@@ -459,20 +531,25 @@ function drawTop(w){
 }
 function drawTopTable(){
   const w = W(); if (!w) return;
-  const q = $('tp-q').value.trim().toLowerCase(), numK = !['item','item_no','status'].includes(TP.key);
+  const q = $('tp-q').value.trim().toLowerCase(), numK = !['item','item_no','status'].includes(TP.key), dvT = $('tp-div').value;
   const cnt = {}; weeks.forEach(x => new Set((x.top30 || []).filter(r => r.list === 'All').map(r => r.item_no)).forEach(k => cnt[k] = (cnt[k] || 0) + 1));
-  const tb = $('tb-tp'); tb.replaceChildren();
-  topRows(w).filter(r => !q || r.item.toLowerCase().includes(q) || r.item_no.includes(q))
+  const tb = $('tb-tp'); tb.replaceChildren(); const mxT = d3.max(topRows(w), r => r.amount) || 1;
+  document.querySelectorAll('#t-tp th.s').forEach(th => { if (th.dataset.k === TP.key) th.dataset.dir = TP.dir; else delete th.dataset.dir; });
+  topRows(w).map(r => ({...r, ucost: r.cw ? r.amount / r.cw : null, dept: r.dept === undefined || r.dept === '' ? null : +r.dept})).filter(r => !q || r.item.toLowerCase().includes(q) || r.item_no.includes(q))
     .sort((a, b) => { const va = numK ? (a[TP.key] ?? -Infinity) : String(a[TP.key]), vb = numK ? (b[TP.key] ?? -Infinity) : String(b[TP.key]); return (va < vb ? -1 : va > vb ? 1 : 0) * TP.dir; })
-    .forEach(r => { const tr = tb.insertRow(); td(tr, r.item_no); td(tr, r.item); td(tr, r.status); td(tr, r.lw == null ? '' : n0(r.lw), 'r'); td(tr, r.cw == null ? '' : n0(r.cw), 'r');
-      td(tr, r.diff == null ? '' : r.diff === 0 ? '0' : sgn(r.diff), 'r ' + (r.diff === 0 ? 'hot bad' : r.diff > 0 ? 'bad' : 'muted')); td(tr, n0(Math.round(r.amount)), 'r');
+    .forEach(r => { const tr = tb.insertRow(); td(tr, r.item_no); nameTd(tr, r.item, isNewT(r)); td(tr, r.dept == null ? '' : deptName(dvT, String(r.dept))); pill(tr, r.status); td(tr, r.lw == null ? '' : n0(r.lw), 'r'); td(tr, r.cw == null ? '' : n0(r.cw), 'r');
+      td(tr, r.diff == null ? '' : r.diff === 0 ? '0' : sgn(r.diff), 'r ' + (r.diff === 0 ? 'hot bad' : r.diff > 0 ? 'bad' : 'muted')); barTd(tr, r.amount, mxT); td(tr, r.ucost == null ? '' : n2(r.ucost), 'r'); td(tr, r.unit == null ? '' : n2(r.unit), 'r');
       const c = cnt[r.item_no] || 0; td(tr, c ? c + ' / ' + weeks.length : '', 'r' + (c > 1 && c === weeks.length ? ' hot bad' : '')); });
 }
 
 /* ---------- suppliers ---------- */
 function drawSup(){
-  const w = W(); if (!w) return; const itAll = w.items || []; const it = SDV ? itAll.filter(r => r.division === SDV) : itAll; $('sp-div').value = SDV;
-  $('sp-note').textContent = itAll.length ? 'ข้อมูลจากชีท Stock LY ของไฟล์สัปดาห์ ' + wkY(w.week) + ' · ' + n0(itAll.length) + ' รายการ · ยอดรวม ' + n0(Math.round(d3.sum(itAll, r => r.amount))) + ' บาท' + (SDV ? ' · ตัวเลขด้านล่างกรองเฉพาะ ' + SDV : '') + ' (อาจไม่เท่ายอดใน Compare Summary พอดี เพราะดึงคนละช่วงเวลา)' : 'ไฟล์สัปดาห์นี้ไม่มีชีท Stock LY จึงไม่มีข้อมูลรายสินค้า';
+  const w = W(); if (!w) return; const itAll = w.items || []; $('sp-div').value = SDV;
+  { const sel = $('sp-dept'), ds = SDV ? deptList(SDV, itAll) : []; if (!ds.includes(SDP)) SDP = '';
+    sel.replaceChildren(new Option(SDV ? 'ทุกแผนกย่อย' : 'ทุกแผนกย่อย (เลือกแผนกก่อน)', ''), ...ds.map(d => new Option(deptName(SDV, d), d))); sel.value = SDP; sel.disabled = !SDV; }
+  const it = itAll.filter(r => (!SDV || r.division === SDV) && (!SDP || String(r.dept) === SDP));
+  const scope = SDV ? SDV + (SDP ? ' · ' + deptName(SDV, SDP) : '') : '';
+  $('sp-note').textContent = itAll.length ? 'ข้อมูลจากชีท Stock LY ของไฟล์สัปดาห์ ' + wkY(w.week) + ' · ' + n0(itAll.length) + ' รายการ · ยอดรวม ' + n0(Math.round(d3.sum(itAll, r => r.amount))) + ' บาท' + (scope ? ' · ตัวเลขด้านล่างกรองเฉพาะ ' + scope : '') + ' (อาจไม่เท่ายอดใน Compare Summary พอดี เพราะดึงคนละช่วงเวลา)' : 'ไฟล์สัปดาห์นี้ไม่มีชีท Stock LY จึงไม่มีข้อมูลรายสินค้า';
   const amts = it.map(r => r.amount).sort((a, b) => b - a), tot = d3.sum(amts); let c = 0, k = 0; for (const a of amts) { if (c >= tot / 2) break; c += a; k++; }
   const nos = it.filter(r => !r.sales_mtd), oo = it.filter(r => r.on_order > 0);
   $('k-par').textContent = it.length ? n0(k) : '—'; $('k-par-d').textContent = it.length ? 'จากทั้งหมด ' + n0(it.length) + ' SKU' : '';
@@ -493,10 +570,15 @@ function drawSup(){
       .on('click', (ev, d) => { SUP = SUP === d.s ? '' : d.s; drawSup(); });
   }
   const rsSup = SUP ? it.filter(r => r.supplier === SUP) : it;
-  const rs = SST ? rsSup.filter(r => r.status === SST) : rsSup;
+  const stF = SST === 'AL+AT' ? ['AL','AT'] : SST ? [SST] : null;
+  const prevW = weeks.filter(x => x.week < w.week && (x.items || []).length).sort((a, b) => a.week < b.week ? 1 : -1)[0];
+  const pset = prevW ? new Set(prevW.items.map(r => r.item_no)) : null, isNewS = r => !!pset && !pset.has(r.item_no);
+  if (!pset) SNEW = false; $('sp-new').checked = SNEW; $('sp-new').disabled = !pset;
+  $('sp-new-l').textContent = pset ? 'เฉพาะรายการใหม่ (ไม่อยู่ในสัปดาห์ ' + wk(prevW.week) + ')' : 'เฉพาะรายการใหม่ (ต้องมีสัปดาห์ก่อนเก็บไว้)';
+  const rs = rsSup.filter(r => (!stF || stF.includes(r.status)) && (!SNEW || isNewS(r))), nwS = pset ? rs.filter(isNewS) : [];
   if (SUP) { const all = itAll.filter(r => r.supplier === SUP), ta = d3.sum(all, r => r.amount) || 1;
     const byDiv = d3.rollups(all, v => d3.sum(v, r => r.amount), r => r.division).sort((a, b) => b[1] - a[1]);
-    const byDept = d3.rollups(all, v => d3.sum(v, r => r.amount), r => r.division + ' แผนก ' + r.dept).sort((a, b) => b[1] - a[1]).slice(0, 4);
+    const byDept = d3.rollups(all, v => d3.sum(v, r => r.amount), r => r.division + ' ' + deptName(r.division, r.dept)).sort((a, b) => b[1] - a[1]).slice(0, 4);
     $('sp-mix').textContent = 'ซัพพลายเออร์นี้อยู่ในแผนก: ' + byDiv.map(([d, v]) => d + ' ' + Math.round(v / ta * 100) + '% (' + short(v) + ')').join(' · ') + ' — แผนกย่อยหลัก: ' + byDept.map(([d, v]) => d + ' ' + short(v)).join(', ');
   } else $('sp-mix').textContent = '';
   $('sp-st').value = SST;
@@ -516,13 +598,13 @@ function drawSup(){
     g.append('text').attr('text-anchor', 'middle').attr('y', 5).attr('font-size', 13).attr('fill', css('--ink')).text(short(tt));
     const lg = svg.append('g').attr('transform', `translate(${2 * R + 28},${H / 2 - md2.length * 11})`);
     md2.forEach((p, k2) => { const r = lg.append('g').attr('transform', `translate(0,${k2 * 22})`); r.append('rect').attr('width', 10).attr('height', 10).attr('rx', 2).attr('fill', STC[p.i]); r.append('text').attr('x', 16).attr('y', 9).attr('font-size', 11).attr('fill', css('--ink')).text(p.n + ' ' + Math.round(p.v / tt * 100) + '%'); }); }
-  $('sp-items-h').textContent = 'รายการสินค้า' + (SDV ? ' ' + SDV : '') + (SST ? ' สถานะ ' + CODE[SST] : '') + (SUP ? ' ของ ' + SUP : ' (ทุกซัพพลายเออร์)');
-  const lim = (SUP || SST || SDV) ? 2000 : 50;
-  $('sp-items-n').textContent = n0(rs.length) + ' รายการ · มูลค่ารวม ' + n0(Math.round(d3.sum(rs, r => r.amount))) + ' บาท · เรียงตามมูลค่า' + (rs.length > lim ? ' · แสดง ' + lim + ' รายการแรก (เลือกสถานะหรือซัพพลายเออร์เพื่อดูทั้งหมด)' : '');
+  $('sp-items-h').textContent = 'รายการสินค้า' + (scope ? ' ' + scope : '') + (SST ? ' สถานะ ' + STL(SST) : '') + (SUP ? ' ของ ' + SUP : ' (ทุกซัพพลายเออร์)') + (SNEW ? ' · เฉพาะรายการใหม่' : '');
+  const lim = (SUP || SST || SDV || SNEW) ? 2000 : 50, mxS = d3.max(rs, r => r.amount) || 1;
+  $('sp-items-n').textContent = n0(rs.length) + ' รายการ · มูลค่ารวม ' + n0(Math.round(d3.sum(rs, r => r.amount))) + ' บาท · เรียงตามมูลค่า' + (pset && !SNEW ? ' · รายการใหม่ ' + n0(nwS.length) + ' รายการ มูลค่า ' + n0(Math.round(d3.sum(nwS, r => r.amount))) + ' บาท' : '') + (rs.length > lim ? ' · แสดง ' + lim + ' รายการแรก (เลือกสถานะหรือซัพพลายเออร์เพื่อดูทั้งหมด)' : '');
   const tb = $('tb-sp'); tb.replaceChildren();
-  rs.slice().sort((a, b) => b.amount - a.amount).slice(0, lim).forEach(r => { const tr = tb.insertRow(); td(tr, r.item_no); td(tr, r.item); td(tr, r.supplier.replace('บมจ.', '').replace('บจ.', '').trim()); td(tr, r.division); td(tr, r.dept, 'r'); td(tr, r.status); td(tr, n0(r.qty), 'r'); td(tr, n0(Math.round(r.amount)), 'r'); td(tr, n0(r.aging_day), 'r'); td(tr, n0(r.sales_mtd), 'r' + (!r.sales_mtd ? ' hot bad' : '')); td(tr, r.on_order ? n0(r.on_order) : '', 'r' + (r.on_order ? ' hot bad' : '')); });
+  rs.slice().sort((a, b) => b.amount - a.amount).slice(0, lim).forEach(r => { const tr = tb.insertRow(); td(tr, r.item_no); nameTd(tr, r.item, isNewS(r)); td(tr, r.supplier.replace('บมจ.', '').replace('บจ.', '').trim(), 'nm'); td(tr, r.division); td(tr, deptName(r.division, r.dept)); pill(tr, r.status); td(tr, n0(r.qty), 'r'); barTd(tr, r.amount, mxS); td(tr, r.qty ? n2(r.amount / r.qty) : r.wac ? n2(r.wac) : '', 'r'); td(tr, r.sp == null ? '' : n2(r.sp), 'r'); td(tr, n0(r.aging_day), 'r'); td(tr, n0(r.sales_mtd), 'r' + (!r.sales_mtd ? ' hot bad' : '')); td(tr, r.on_order ? n0(r.on_order) : '', 'r' + (r.on_order ? ' hot bad' : '')); });
   const to = $('tb-oo'); to.replaceChildren();
-  oo.slice().sort((a, b) => b.amount - a.amount).forEach(r => { const tr = to.insertRow(); td(tr, r.item_no); td(tr, r.item); td(tr, r.division); td(tr, r.status); td(tr, n0(Math.round(r.amount)), 'r'); td(tr, n0(r.on_order), 'r hot bad'); td(tr, n0(r.sales_mtd), 'r'); });
+  oo.slice().sort((a, b) => b.amount - a.amount).forEach(r => { const tr = to.insertRow(); td(tr, r.item_no); nameTd(tr, r.item, isNewS(r)); td(tr, r.division); pill(tr, r.status); td(tr, n0(Math.round(r.amount)), 'r'); td(tr, n0(r.on_order), 'r hot bad'); td(tr, n0(r.sales_mtd), 'r'); });
 }
 
 /* ---------- history ---------- */
