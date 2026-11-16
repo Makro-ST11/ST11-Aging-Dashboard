@@ -50,8 +50,11 @@ table.t{width:100%;border-collapse:separate;border-spacing:0;font-size:13.5px;fo
 table.t th{text-align:center;font-weight:600;font-size:12.5px;line-height:1.35;padding:10px 10px;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:1;background:color-mix(in srgb,var(--acc) 14%,var(--card));color:color-mix(in srgb,var(--acc) 55%,var(--ink));cursor:default}
 table.t th.s{cursor:pointer;user-select:none}
 table.t th.s:hover{background:color-mix(in srgb,var(--acc) 24%,var(--card))}
-table.t th.s[data-dir]::after{content:' ▾';font-size:11px}
-table.t th.s[data-dir="1"]::after{content:' ▴'}
+table.t th.s::after{content:' ⇅';font-size:11px;opacity:.35}
+table.t th.s[data-dir]::after{content:' ▼';opacity:1}
+table.t th.s[data-dir="1"]::after{content:' ▲';opacity:1}
+table.t th.s[data-dir]{background:color-mix(in srgb,var(--acc) 28%,var(--card))}
+.sub{display:block;font-size:11.5px;color:var(--soft);font-weight:400}
 table.t td{text-align:center;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
 table.t tbody tr:nth-child(even){background:color-mix(in srgb,var(--acc) 4%,transparent)}
 table.t tbody tr{transition:background .12s}
@@ -156,8 +159,10 @@ details{font-size:13px;color:var(--soft)}
         <p class="note" id="tp-sum"></p>
         <div class="chart" id="c-tp"></div>
         <p class="note">10 อันดับแรกตามมูลค่า · <span class="bad hot">แท่งแดง</span> = สต็อกไม่ขยับ · แท่งม่วง = มีการขาย</p>
-        <div class="scroll"><table class="t" id="t-tp"><thead><tr><th class="s" data-k="item_no">รหัส</th><th class="s nm" data-k="item">สินค้า</th><th class="s" data-k="dept">แผนกย่อย</th><th class="s" data-k="status">สถานะ</th><th class="s r" data-k="lw">สต็อกสัปดาห์ก่อน</th><th class="s r" data-k="cw">สต็อกล่าสุด</th><th class="s r" data-k="diff">เปลี่ยนแปลง</th><th class="s r" data-k="amount">มูลค่ารวม (บาท)</th><th class="s r" data-k="ucost">ทุนต่อหน่วย (บาท)</th><th class="s r" data-k="unit">ราคาขายต่อหน่วย (บาท)</th><th class="r">ติด Top 30 (สัปดาห์)</th></tr></thead><tbody id="tb-tp"></tbody></table></div>
-        <p class="note">มูลค่ารวม = ราคาทุน × สต็อกล่าสุด · ทุนต่อหน่วย = มูลค่ารวม ÷ สต็อกล่าสุด · ราคาขายต่อหน่วย = ช่อง Unit Price ในไฟล์</p>
+        <div class="scroll"><table class="t" id="t-tp"><thead><tr><th class="s" data-k="item_no">รหัส</th><th class="s nm" data-k="item">สินค้า</th><th class="s" data-k="dept">แผนกย่อย</th><th class="s" data-k="status">สถานะ</th><th class="s r" data-k="lw">สต็อกสัปดาห์ก่อน</th><th class="s r" data-k="cw">สต็อกล่าสุด</th><th class="s r" data-k="diff">เปลี่ยนแปลง</th><th class="s r" data-k="amount">มูลค่ารวม (บาท)</th><th class="s r" data-k="ucost">ทุนต่อหน่วย (บาท)</th><th class="s r" data-k="unit">ราคาขายต่อหน่วย (บาท)</th><th class="s r" data-k="gp">กำไร %</th><th class="s r" data-k="stuck">ติด Top 30 (สัปดาห์)</th></tr></thead><tbody id="tb-tp"></tbody></table></div>
+        <p class="note">มูลค่ารวม = ช่อง Grand Total ในชีท COMPARE ITEM (คิดจากราคาขายไม่รวม VAT × สต็อกล่าสุด) · ทุนต่อหน่วย = WAC จากชีท Stock LY ของสินค้ารหัสเดียวกัน ถ้าไม่พบจะเว้นว่าง · ราคาขายต่อหน่วย = ช่อง Unit Price ในไฟล์</p>
+        <p class="note">กำไร % = (ราคาขาย − ทุน) ÷ ราคาขาย ตัวเลขเล็กด้านล่างคือกำไรต่อหน่วยเป็นบาท · ราคาขายในไฟล์เป็นราคารวม VAT ส่วนทุนไม่รวม VAT สินค้าที่มี VAT จึงมีกำไรจริงต่ำกว่าที่แสดง · ยังไม่หักส่วนลดหรือ Markdown</p>
+        <p class="note">คลิกหัวคอลัมน์เพื่อเรียงลำดับ คลิกซ้ำเพื่อสลับมากไปน้อย ▼ หรือน้อยไปมาก ▲</p>
         <p class="note">ป้าย <span class="new" style="margin-left:0">ใหม่</span> ในหน้านี้ = สัปดาห์ก่อนสต็อกเป็น 0 และสัปดาห์นี้มีสต็อก (เพิ่งเข้า Aging หรือมีของเข้าใหม่)</p>
         <p class="note">เปลี่ยนแปลง: ติดลบ = ขายออก · 0 = ไม่ขยับ · บวก = เพิ่งเข้า Aging หรือมีของเข้า · "ติด Top 30" นับจากสัปดาห์ที่เก็บไว้ในเครื่องนี้</p>
       </div>
@@ -180,7 +185,8 @@ details{font-size:13px;color:var(--soft)}
           <p class="note">สัดส่วนสถานะ · มูลค่าบาท · กรองตามซัพพลายเออร์</p><div class="chart" id="c-mix"></div></div>
       </div>
       <div class="card"><h2 id="sp-items-h">รายการสินค้า</h2><p class="note" id="sp-items-n">เรียงตามมูลค่า</p>
-        <div class="scroll"><table class="t"><thead><tr><th>รหัส</th><th class="nm">สินค้า</th><th class="nm">ซัพพลายเออร์</th><th>แผนก</th><th>แผนกย่อย</th><th>สถานะ</th><th class="r">จำนวน</th><th class="r">มูลค่ารวม (บาท)</th><th class="r">ทุนต่อหน่วย</th><th class="r">ราคาขายต่อหน่วย</th><th class="r">อายุ (วัน)</th><th class="r">ขาย MTD</th><th class="r">ค้างสั่ง</th></tr></thead><tbody id="tb-sp"></tbody></table></div></div>
+        <p class="note">คลิกหัวคอลัมน์เพื่อเรียงลำดับ คลิกซ้ำเพื่อสลับมากไปน้อย ▼ หรือน้อยไปมาก ▲ · กำไร % = (ราคาขาย − ทุน) ÷ ราคาขาย · ราคาขายในไฟล์รวม VAT ส่วนทุนไม่รวม สินค้าที่มี VAT จึงมีกำไรจริงต่ำกว่าที่แสดง</p>
+        <div class="scroll"><table class="t" id="t-sp"><thead><tr><th class="s" data-k="item_no">รหัส</th><th class="s nm" data-k="item">สินค้า</th><th class="s nm" data-k="supplier">ซัพพลายเออร์</th><th class="s" data-k="division">แผนก</th><th class="s" data-k="dept">แผนกย่อย</th><th class="s" data-k="status">สถานะ</th><th class="s r" data-k="qty">จำนวน</th><th class="s r" data-k="amount">มูลค่ารวม (บาท)</th><th class="s r" data-k="ucost">ทุนต่อหน่วย</th><th class="s r" data-k="sp">ราคาขายต่อหน่วย</th><th class="s r" data-k="gp">กำไร %</th><th class="s r" data-k="aging_day">อายุ (วัน)</th><th class="s r" data-k="sales_mtd">ขาย MTD</th><th class="s r" data-k="on_order">ค้างสั่ง</th></tr></thead><tbody id="tb-sp"></tbody></table></div></div>
       <div class="card"><h2>สินค้าติด Aging ที่ยังมีของค้างสั่ง</h2><p class="note">ควรยกเลิกหรือชะลอ PO ก่อน</p>
         <div class="scroll"><table class="t"><thead><tr><th>รหัส</th><th class="nm">สินค้า</th><th>แผนก</th><th>สถานะ</th><th class="r">มูลค่า (บาท)</th><th class="r">ค้างสั่ง</th><th class="r">ขาย MTD</th></tr></thead><tbody id="tb-oo"></tbody></table></div></div>
     </section>
@@ -344,7 +350,7 @@ async function handleFile(f){
 }
 
 /* ---------- state + controls ---------- */
-let cur = null, tab = 'ov', SUP = '', SST = '', SDV = '', SDP = '', TDP = '', DDV = '', TNEW = false, SNEW = false, TP = {key: 'amount', dir: -1};
+let cur = null, tab = 'ov', SUP = '', SST = '', SDV = '', SDP = '', TDP = '', DDV = '', TNEW = false, SNEW = false, SP = {key: 'amount', dir: -1}, TP = {key: 'amount', dir: -1};
 function W(){ return weeks.find(w => w.week === cur) || weeks[0]; }
 function fillWeeks(){
   const sel = $('week'); sel.replaceChildren(...weeks.map(w => new Option(wkY(w.week), w.week)));
@@ -385,8 +391,12 @@ $('sp-dept').addEventListener('change', e => { SDP = e.target.value; SUP = ''; d
 $('dv-div').addEventListener('change', e => { DDV = e.target.value; drawDept(W()); });
 $('tp-q').addEventListener('input', () => drawTopTable());
 document.querySelectorAll('#t-tp th.s').forEach(th => th.addEventListener('click', () => {
-  const k = th.dataset.k; if (TP.key === k) TP.dir *= -1; else { TP.key = k; TP.dir = ['item','item_no','status','dept'].includes(k) ? 1 : -1; }
+  const k = th.dataset.k; if (TP.key === k) TP.dir *= -1; else { TP.key = k; TP.dir = TXT.concat(['dept']).includes(k) ? 1 : -1; }
   drawTopTable();
+}));
+document.querySelectorAll('#t-sp th.s').forEach(th => th.addEventListener('click', () => {
+  const k = th.dataset.k; if (SP.key === k) SP.dir *= -1; else { SP.key = k; SP.dir = TXT.concat(['dept']).includes(k) ? 1 : -1; }
+  drawSup();
 }));
 $('sp-sel').addEventListener('change', e => { SUP = e.target.value; drawSup(); });
 $('sp-st').addEventListener('change', e => { SST = e.target.value; drawSup(); });
@@ -403,6 +413,11 @@ function pill(tr, code){ const x = tr.insertCell(); if (code) { const sp = docum
 function nameTd(tr, text, isNew){ const x = tr.insertCell(); x.className = 'nm'; x.textContent = text; if (isNew) { const b = document.createElement('span'); b.className = 'new'; b.textContent = 'ใหม่'; x.appendChild(b); } return x; }
 function barTd(tr, v, max){ const x = tr.insertCell(); const d = document.createElement('div'); d.textContent = n0(Math.round(v)); const b = document.createElement('i'); b.className = 'bar'; b.style.width = Math.max(3, Math.round(v / (max || 1) * 100)) + '%'; x.append(d, b); return x; }
 const isNewT = r => !r.lw && r.cw > 0;
+const TXT = ['item','item_no','status','supplier','division'], STO = {AL: 1, AT: 2, CR: 3, OB: 4, FP: 5};
+const gpOf = (c, p) => (c == null || !p) ? null : (p - c) / p * 100;
+function gpTd(tr, c, p){ const x = tr.insertCell(), g = gpOf(c, p); if (g == null) return x; const d = document.createElement('div'); d.textContent = (g < 0 ? '−' : '') + Math.abs(g).toFixed(1) + '%'; d.className = 'hot ' + (g <= 0 ? 'bad' : 'good'); const b = document.createElement('span'); b.className = 'sub'; b.textContent = sgn(p - c, n2) + ' บาท'; x.append(d, b); return x; }
+function sorter(S){ const k = S.key; return (a, b) => { let va, vb; if (k === 'status') { va = STO[a.status] || 9; vb = STO[b.status] || 9; } else if (k === 'item_no') { va = +a.item_no || 0; vb = +b.item_no || 0; } else if (TXT.includes(k)) { return String(a[k]).localeCompare(String(b[k]), 'th') * S.dir; } else { va = a[k]; vb = b[k]; if (va == null || vb == null) return (va == null) - (vb == null); } return (va < vb ? -1 : va > vb ? 1 : 0) * S.dir; }; }
+function markSort(id, S){ document.querySelectorAll('#' + id + ' th.s').forEach(th => { if (th.dataset.k === S.key) th.dataset.dir = S.dir; else delete th.dataset.dir; }); }
 function td(tr, text, c){ const x = tr.insertCell(); x.textContent = text; if (c) x.className = c; return x; }
 function grid(svg, y, x0, x1, ticks, fmt){ svg.append('g').selectAll('line').data(y.ticks(ticks)).join('line').attr('x1', x0).attr('x2', x1).attr('y1', d => y(d)).attr('y2', d => y(d)).attr('stroke', css('--line')); svg.append('g').selectAll('text').data(y.ticks(ticks)).join('text').attr('x', x0 - 6).attr('y', d => y(d) + 4).attr('text-anchor', 'end').attr('font-size', 11).attr('fill', css('--soft')).text(fmt); }
 function weeksIn(w){ return [...new Set(w.summary.total.map(t => t.week))].sort(); }
@@ -534,11 +549,12 @@ function drawTopTable(){
   const q = $('tp-q').value.trim().toLowerCase(), numK = !['item','item_no','status'].includes(TP.key), dvT = $('tp-div').value;
   const cnt = {}; weeks.forEach(x => new Set((x.top30 || []).filter(r => r.list === 'All').map(r => r.item_no)).forEach(k => cnt[k] = (cnt[k] || 0) + 1));
   const tb = $('tb-tp'); tb.replaceChildren(); const mxT = d3.max(topRows(w), r => r.amount) || 1;
-  document.querySelectorAll('#t-tp th.s').forEach(th => { if (th.dataset.k === TP.key) th.dataset.dir = TP.dir; else delete th.dataset.dir; });
-  topRows(w).map(r => ({...r, ucost: r.cw ? r.amount / r.cw : null, dept: r.dept === undefined || r.dept === '' ? null : +r.dept})).filter(r => !q || r.item.toLowerCase().includes(q) || r.item_no.includes(q))
-    .sort((a, b) => { const va = numK ? (a[TP.key] ?? -Infinity) : String(a[TP.key]), vb = numK ? (b[TP.key] ?? -Infinity) : String(b[TP.key]); return (va < vb ? -1 : va > vb ? 1 : 0) * TP.dir; })
+  markSort('t-tp', TP);
+  const wacOf = new Map((w.items || []).map(r => [r.item_no, r.wac]));
+  topRows(w).map(r => { const ucost = wacOf.get(r.item_no) || null; return {...r, ucost, gp: gpOf(ucost, r.unit), stuck: cnt[r.item_no] || 0, dept: r.dept === undefined || r.dept === '' ? null : +r.dept}; }).filter(r => !q || r.item.toLowerCase().includes(q) || r.item_no.includes(q))
+    .sort(sorter(TP))
     .forEach(r => { const tr = tb.insertRow(); td(tr, r.item_no); nameTd(tr, r.item, isNewT(r)); td(tr, r.dept == null ? '' : deptName(dvT, String(r.dept))); pill(tr, r.status); td(tr, r.lw == null ? '' : n0(r.lw), 'r'); td(tr, r.cw == null ? '' : n0(r.cw), 'r');
-      td(tr, r.diff == null ? '' : r.diff === 0 ? '0' : sgn(r.diff), 'r ' + (r.diff === 0 ? 'hot bad' : r.diff > 0 ? 'bad' : 'muted')); barTd(tr, r.amount, mxT); td(tr, r.ucost == null ? '' : n2(r.ucost), 'r'); td(tr, r.unit == null ? '' : n2(r.unit), 'r');
+      td(tr, r.diff == null ? '' : r.diff === 0 ? '0' : sgn(r.diff), 'r ' + (r.diff === 0 ? 'hot bad' : r.diff > 0 ? 'bad' : 'muted')); barTd(tr, r.amount, mxT); td(tr, r.ucost == null ? '' : n2(r.ucost), 'r'); td(tr, r.unit == null ? '' : n2(r.unit), 'r'); gpTd(tr, r.ucost, r.unit);
       const c = cnt[r.item_no] || 0; td(tr, c ? c + ' / ' + weeks.length : '', 'r' + (c > 1 && c === weeks.length ? ' hot bad' : '')); });
 }
 
@@ -600,9 +616,10 @@ function drawSup(){
     md2.forEach((p, k2) => { const r = lg.append('g').attr('transform', `translate(0,${k2 * 22})`); r.append('rect').attr('width', 10).attr('height', 10).attr('rx', 2).attr('fill', STC[p.i]); r.append('text').attr('x', 16).attr('y', 9).attr('font-size', 11).attr('fill', css('--ink')).text(p.n + ' ' + Math.round(p.v / tt * 100) + '%'); }); }
   $('sp-items-h').textContent = 'รายการสินค้า' + (scope ? ' ' + scope : '') + (SST ? ' สถานะ ' + STL(SST) : '') + (SUP ? ' ของ ' + SUP : ' (ทุกซัพพลายเออร์)') + (SNEW ? ' · เฉพาะรายการใหม่' : '');
   const lim = (SUP || SST || SDV || SNEW) ? 2000 : 50, mxS = d3.max(rs, r => r.amount) || 1;
-  $('sp-items-n').textContent = n0(rs.length) + ' รายการ · มูลค่ารวม ' + n0(Math.round(d3.sum(rs, r => r.amount))) + ' บาท · เรียงตามมูลค่า' + (pset && !SNEW ? ' · รายการใหม่ ' + n0(nwS.length) + ' รายการ มูลค่า ' + n0(Math.round(d3.sum(nwS, r => r.amount))) + ' บาท' : '') + (rs.length > lim ? ' · แสดง ' + lim + ' รายการแรก (เลือกสถานะหรือซัพพลายเออร์เพื่อดูทั้งหมด)' : '');
+  $('sp-items-n').textContent = n0(rs.length) + ' รายการ · มูลค่ารวม ' + n0(Math.round(d3.sum(rs, r => r.amount))) + ' บาท' + (pset && !SNEW ? ' · รายการใหม่ ' + n0(nwS.length) + ' รายการ มูลค่า ' + n0(Math.round(d3.sum(nwS, r => r.amount))) + ' บาท' : '') + (rs.length > lim ? ' · แสดง ' + lim + ' รายการแรก (เลือกสถานะหรือซัพพลายเออร์เพื่อดูทั้งหมด)' : '');
   const tb = $('tb-sp'); tb.replaceChildren();
-  rs.slice().sort((a, b) => b.amount - a.amount).slice(0, lim).forEach(r => { const tr = tb.insertRow(); td(tr, r.item_no); nameTd(tr, r.item, isNewS(r)); td(tr, r.supplier.replace('บมจ.', '').replace('บจ.', '').trim(), 'nm'); td(tr, r.division); td(tr, deptName(r.division, r.dept)); pill(tr, r.status); td(tr, n0(r.qty), 'r'); barTd(tr, r.amount, mxS); td(tr, r.qty ? n2(r.amount / r.qty) : r.wac ? n2(r.wac) : '', 'r'); td(tr, r.sp == null ? '' : n2(r.sp), 'r'); td(tr, n0(r.aging_day), 'r'); td(tr, n0(r.sales_mtd), 'r' + (!r.sales_mtd ? ' hot bad' : '')); td(tr, r.on_order ? n0(r.on_order) : '', 'r' + (r.on_order ? ' hot bad' : '')); });
+  markSort('t-sp', SP);
+  rs.map(r => { const ucost = r.qty ? r.amount / r.qty : r.wac || null; return {...r, ucost, gp: gpOf(ucost, r.sp), dept: r.dept === '' ? null : +r.dept, deptRaw: r.dept}; }).sort(sorter(SP)).slice(0, lim).forEach(r => { const tr = tb.insertRow(); td(tr, r.item_no); nameTd(tr, r.item, isNewS(r)); td(tr, r.supplier.replace('บมจ.', '').replace('บจ.', '').trim(), 'nm'); td(tr, r.division); td(tr, deptName(r.division, r.deptRaw)); pill(tr, r.status); td(tr, n0(r.qty), 'r'); barTd(tr, r.amount, mxS); td(tr, r.ucost == null ? '' : n2(r.ucost), 'r'); td(tr, r.sp == null ? '' : n2(r.sp), 'r'); gpTd(tr, r.ucost, r.sp); td(tr, n0(r.aging_day), 'r'); td(tr, n0(r.sales_mtd), 'r' + (!r.sales_mtd ? ' hot bad' : '')); td(tr, r.on_order ? n0(r.on_order) : '', 'r' + (r.on_order ? ' hot bad' : '')); });
   const to = $('tb-oo'); to.replaceChildren();
   oo.slice().sort((a, b) => b.amount - a.amount).forEach(r => { const tr = to.insertRow(); td(tr, r.item_no); nameTd(tr, r.item, isNewS(r)); td(tr, r.division); pill(tr, r.status); td(tr, n0(Math.round(r.amount)), 'r'); td(tr, n0(r.on_order), 'r hot bad'); td(tr, n0(r.sales_mtd), 'r'); });
 }
