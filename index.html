@@ -74,6 +74,9 @@ table.t td.nm{font-weight:500;max-width:24rem}
 .chk:has(input:checked){border-color:var(--acc);background:color-mix(in srgb,var(--acc) 14%,var(--card));font-weight:600}
 .chk:has(input:disabled){opacity:.55;cursor:not-allowed}
 .chk input{accent-color:var(--acc);margin:0}
+.xbtn{border-color:var(--acc);color:color-mix(in srgb,var(--acc) 70%,var(--ink));font-weight:600}
+.xbtn::before{content:'⤓ '}
+.xbtn:hover{background:color-mix(in srgb,var(--acc) 12%,var(--card))}
 .card{box-shadow:0 1px 2px rgba(20,30,50,.04),0 6px 18px rgba(20,30,50,.05)}
 select,input[type=search]{transition:border-color .12s,box-shadow .12s}
 select:focus,input[type=search]:focus{outline:0;border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 22%,transparent)}
@@ -94,6 +97,7 @@ details{font-size:13px;color:var(--soft)}
       <span>สัปดาห์:</span>
       <select id="week" aria-label="เลือกสัปดาห์"></select>
       <button class="btn ghost" id="del">ลบสัปดาห์นี้</button>
+      <button class="btn" id="xls">ส่งออก Excel (รายงานครบ)</button>
       <button class="btn ghost" id="exp">บันทึกเป็นไฟล์สำหรับส่งต่อ</button>
     </div>
   </header>
@@ -154,6 +158,7 @@ details{font-size:13px;color:var(--soft)}
           <select id="tp-dept" aria-label="แผนกย่อย"></select>
           <select id="tp-list"><option value="All">ทุกสถานะ</option><option value="ALAT">Alert + Attention</option><option value="AL">Alert</option><option value="AT">Attention</option><option value="Critical">Critical</option><option value="Obsolete">Obsolete</option><option value="FullProvision">Full Provision</option></select>
           <label class="chk"><input type="checkbox" id="tp-new">เฉพาะรายการใหม่</label>
+          <button class="btn xbtn" id="tp-xls" type="button">ส่งออกตารางนี้</button>
           <input type="search" id="tp-q" placeholder="ค้นหาชื่อหรือรหัสสินค้า">
         </div>
         <p class="note" id="tp-sum"></p>
@@ -179,7 +184,7 @@ details{font-size:13px;color:var(--soft)}
         <div class="card"><h2>ซัพพลายเออร์ที่มี Aging สูงสุด 10 อันดับ</h2><p class="note">บาท · ราคาทุน · คลิกแท่งเพื่อกรอง (คลิกซ้ำเพื่อยกเลิก)</p><div class="chart" id="c-sup"></div></div>
         <div class="card"><h2>ดูรายซัพพลายเออร์</h2>
           <div class="ctl"><select id="sp-div" aria-label="แผนก"><option value="">ทุกแผนก</option><option>Dry Food</option><option>Non Food</option><option>Fresh Food</option></select><select id="sp-dept" aria-label="แผนกย่อย"></select><select id="sp-sel" aria-label="ซัพพลายเออร์"></select>
-          <select id="sp-st" aria-label="สถานะ"><option value="">ทุกสถานะ</option><option value="AL+AT">Alert + Attention</option><option value="AL">Alert</option><option value="AT">Attention</option><option value="CR">Critical</option><option value="OB">Obsolete</option><option value="FP">Full Provision</option></select><label class="chk"><input type="checkbox" id="sp-new"><span id="sp-new-l">เฉพาะรายการใหม่</span></label></div>
+          <select id="sp-st" aria-label="สถานะ"><option value="">ทุกสถานะ</option><option value="AL+AT">Alert + Attention</option><option value="AL">Alert</option><option value="AT">Attention</option><option value="CR">Critical</option><option value="OB">Obsolete</option><option value="FP">Full Provision</option></select><label class="chk"><input type="checkbox" id="sp-new"><span id="sp-new-l">เฉพาะรายการใหม่</span></label><button class="btn xbtn" id="sp-xls" type="button">ส่งออกตารางนี้</button></div>
           <p class="note" id="sp-mix"></p>
           <p class="note">อายุสต็อก (Aging Day) · มูลค่าบาทในแต่ละช่วง · กรองตามซัพพลายเออร์และสถานะ</p><div class="chart" id="c-age"></div>
           <p class="note">สัดส่วนสถานะ · มูลค่าบาท · กรองตามซัพพลายเออร์</p><div class="chart" id="c-mix"></div></div>
@@ -350,14 +355,14 @@ async function handleFile(f){
 }
 
 /* ---------- state + controls ---------- */
-let cur = null, tab = 'ov', SUP = '', SST = '', SDV = '', SDP = '', TDP = '', DDV = '', TNEW = false, SNEW = false, SP = {key: 'amount', dir: -1}, TP = {key: 'amount', dir: -1};
+let LAST_TP = [], LAST_SP = [], LAST_SP_T = '', cur = null, tab = 'ov', SUP = '', SST = '', SDV = '', SDP = '', TDP = '', DDV = '', TNEW = false, SNEW = false, SP = {key: 'amount', dir: -1}, TP = {key: 'amount', dir: -1};
 function W(){ return weeks.find(w => w.week === cur) || weeks[0]; }
 function fillWeeks(){
   const sel = $('week'); sel.replaceChildren(...weeks.map(w => new Option(wkY(w.week), w.week)));
   if (!weeks.some(w => w.week === cur)) cur = weeks[0] ? weeks[0].week : null;
   sel.value = cur || '';
   $('emptyState').hidden = !!weeks.length; $('app').hidden = !weeks.length;
-  $('del').hidden = !weeks.length; $('exp').hidden = !weeks.length; sel.hidden = !weeks.length; sel.previousElementSibling.hidden = !weeks.length;
+  $('del').hidden = !weeks.length; $('xls').hidden = !weeks.length; $('exp').hidden = !weeks.length; sel.hidden = !weeks.length; sel.previousElementSibling.hidden = !weeks.length;
 }
 $('file').addEventListener('change', e => { const f = e.target.files[0]; if (f) handleFile(f); e.target.value = ''; });
 $('week').addEventListener('change', e => { cur = e.target.value; SUP = ''; render(); });
@@ -549,14 +554,172 @@ function drawTopTable(){
   const q = $('tp-q').value.trim().toLowerCase(), numK = !['item','item_no','status'].includes(TP.key), dvT = $('tp-div').value;
   const cnt = {}; weeks.forEach(x => new Set((x.top30 || []).filter(r => r.list === 'All').map(r => r.item_no)).forEach(k => cnt[k] = (cnt[k] || 0) + 1));
   const tb = $('tb-tp'); tb.replaceChildren(); const mxT = d3.max(topRows(w), r => r.amount) || 1;
-  markSort('t-tp', TP);
+  markSort('t-tp', TP); LAST_TP = [];
   const wacOf = new Map((w.items || []).map(r => [r.item_no, r.wac]));
   topRows(w).map(r => { const ucost = wacOf.get(r.item_no) || null; return {...r, ucost, gp: gpOf(ucost, r.unit), stuck: cnt[r.item_no] || 0, dept: r.dept === undefined || r.dept === '' ? null : +r.dept}; }).filter(r => !q || r.item.toLowerCase().includes(q) || r.item_no.includes(q))
-    .sort(sorter(TP))
+    .sort(sorter(TP)).filter(r => LAST_TP.push(r))
     .forEach(r => { const tr = tb.insertRow(); td(tr, r.item_no); nameTd(tr, r.item, isNewT(r)); td(tr, r.dept == null ? '' : deptName(dvT, String(r.dept))); pill(tr, r.status); td(tr, r.lw == null ? '' : n0(r.lw), 'r'); td(tr, r.cw == null ? '' : n0(r.cw), 'r');
       td(tr, r.diff == null ? '' : r.diff === 0 ? '0' : sgn(r.diff), 'r ' + (r.diff === 0 ? 'hot bad' : r.diff > 0 ? 'bad' : 'muted')); barTd(tr, r.amount, mxT); td(tr, r.ucost == null ? '' : n2(r.ucost), 'r'); td(tr, r.unit == null ? '' : n2(r.unit), 'r'); gpTd(tr, r.ucost, r.unit);
       const c = cnt[r.item_no] || 0; td(tr, c ? c + ' / ' + weeks.length : '', 'r' + (c > 1 && c === weeks.length ? ' hot bad' : '')); });
 }
+
+/* ---------- excel export ---------- */
+const XF = {int: '#,##0', dec: '#,##0.00', pct: '0.0%', k: '#,##0.0', dsg: '+#,##0;-#,##0;0', ksg: '+#,##0.0;-#,##0.0;0'};
+function xSheet(title, sub, cols, rows, extra){
+  // cols: [{h, w?, f?, v: row => value}]
+  const aoa = [[title], [sub || ''], [], cols.map(c => c.h)];
+  rows.forEach(r => aoa.push(cols.map(c => { const v = c.v(r); return v === undefined || v === null || (typeof v === 'number' && !isFinite(v)) ? '' : v; })));
+  (extra || []).forEach(x => aoa.push(x));
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  cols.forEach((c, j) => { if (!c.f) return; for (let i = 4; i < 4 + rows.length; i++) { const a = XLSX.utils.encode_cell({r: i, c: j}); if (ws[a] && ws[a].t === 'n') ws[a].z = (c.f === 'int' && !Number.isInteger(ws[a].v)) ? '#,##0.000' : (c.f === 'dsg' && !Number.isInteger(ws[a].v)) ? '+#,##0.000;-#,##0.000;0' : XF[c.f]; } });
+  ws['!cols'] = cols.map((c, j) => ({wch: c.w || Math.min(48, Math.max(8, String(c.h).length + 2, ...rows.slice(0, 300).map(r => String(c.v(r) ?? '').length + 2)))}));
+  if (rows.length) ws['!autofilter'] = {ref: XLSX.utils.encode_range({s: {r: 3, c: 0}, e: {r: 3 + rows.length, c: cols.length - 1}})};
+  return ws;
+}
+function xSave(wb, name){ XLSX.writeFile(wb, name, {compression: true}); }
+const deptOf = r => deptName(r.division, r.dept === null || r.dept === undefined ? '' : String(r.dept));
+const ITEM_COLS = (newCol) => [
+  {h: 'รหัส', v: r => +r.item_no || r.item_no, w: 9},
+  {h: 'สินค้า', v: r => r.item, w: 42},
+  {h: 'ซัพพลายเออร์', v: r => r.supplier, w: 30},
+  {h: 'แผนก', v: r => r.division, w: 11},
+  {h: 'แผนกย่อย', v: r => deptName(r.division, r.deptRaw ?? r.dept), w: 17},
+  {h: 'สถานะ', v: r => CODE[r.status] || r.status, w: 14},
+  {h: 'จำนวน', v: r => r.qty, f: 'int'},
+  {h: 'มูลค่ารวม (บาท ราคาทุน)', v: r => r.amount, f: 'int', w: 14},
+  {h: 'ทุนต่อหน่วย (บาท)', v: r => r.ucost, f: 'dec', w: 12},
+  {h: 'ราคาขายต่อหน่วย (บาท)', v: r => r.sp, f: 'dec', w: 13},
+  {h: 'กำไร %', v: r => r.gp == null ? null : r.gp / 100, f: 'pct', w: 9},
+  {h: 'กำไรต่อหน่วย (บาท)', v: r => r.ucost == null || !r.sp ? null : r.sp - r.ucost, f: 'dec', w: 12},
+  {h: 'อายุสต็อก (วัน)', v: r => r.aging_day, f: 'int', w: 10},
+  {h: 'ขายเดือนนี้ (ชิ้น)', v: r => r.sales_mtd, f: 'int', w: 11},
+  {h: 'ค้างสั่ง (ชิ้น)', v: r => r.on_order || null, f: 'int', w: 10},
+  {h: 'มูลค่าค้างสั่ง (บาท ราคาทุน)', v: r => r.on_order ? r.on_order * r.wac : null, f: 'int', w: 14},
+].concat(newCol ? [{h: 'รายการใหม่', v: r => r.isNew ? 'ใหม่' : '', w: 9}] : []);
+const TOP_COLS = [
+  {h: 'แผนก', v: r => r.division, w: 11},
+  {h: 'ตาราง Top 30', v: r => ({All: 'ทุกสถานะ', Critical: 'Critical', Obsolete: 'Obsolete', FullProvision: 'Full Provision'})[r.list] || r.list, w: 13},
+  {h: 'อันดับ', v: r => r.rank, w: 7},
+  {h: 'รหัส', v: r => +r.item_no || r.item_no, w: 9},
+  {h: 'สินค้า', v: r => r.item, w: 42},
+  {h: 'แผนกย่อย', v: r => deptOf(r), w: 17},
+  {h: 'สถานะ', v: r => CODE[r.status] || r.status, w: 14},
+  {h: 'สต็อกสัปดาห์ก่อน', v: r => r.lw, f: 'int', w: 11},
+  {h: 'สต็อกล่าสุด', v: r => r.cw, f: 'int', w: 10},
+  {h: 'เปลี่ยนแปลง', v: r => r.diff, f: 'dsg', w: 10},
+  {h: 'มูลค่ารวม (บาท)', v: r => r.amount, f: 'int', w: 12},
+  {h: 'ทุนต่อหน่วย (บาท)', v: r => r.ucost, f: 'dec', w: 12},
+  {h: 'ราคาขายต่อหน่วย (บาท)', v: r => r.unit, f: 'dec', w: 13},
+  {h: 'กำไร %', v: r => r.gp == null ? null : r.gp / 100, f: 'pct', w: 9},
+  {h: 'กำไรต่อหน่วย (บาท)', v: r => r.ucost == null || !r.unit ? null : r.unit - r.ucost, f: 'dec', w: 12},
+  {h: 'ติด Top 30 (สัปดาห์)', v: r => r.stuck ? r.stuck + ' / ' + weeks.length : '', w: 11},
+  {h: 'รายการใหม่', v: r => isNewT(r) ? 'ใหม่' : '', w: 9},
+];
+function itemsPrepared(w){
+  const prev = weeks.filter(x => x.week < w.week && (x.items || []).length).sort((a, b) => a.week < b.week ? 1 : -1)[0];
+  const pset = prev ? new Set(prev.items.map(r => r.item_no)) : null;
+  const items = (w.items || []).map(r => { const ucost = r.qty ? r.amount / r.qty : r.wac || null; return {...r, deptRaw: r.dept, ucost, gp: gpOf(ucost, r.sp), isNew: !!pset && !pset.has(r.item_no)}; }).sort((a, b) => b.amount - a.amount);
+  return {prev, items};
+}
+function topPrepared(w){
+  const cnt = {}; weeks.forEach(x => new Set((x.top30 || []).filter(r => r.list === 'All').map(r => r.item_no)).forEach(k => cnt[k] = (cnt[k] || 0) + 1));
+  const wacOf = new Map((w.items || []).map(r => [r.item_no, r.wac])), rk = {};
+  return (w.top30 || []).map(r => { const g = r.division + r.list; rk[g] = (rk[g] || 0) + 1; const ucost = wacOf.get(r.item_no) || null; return {...r, rank: rk[g], ucost, gp: gpOf(ucost, r.unit), stuck: cnt[r.item_no] || 0}; });
+}
+function exportAll(){
+  const w = W(); if (!w) return;
+  if (typeof XLSX === 'undefined') { show('โหลดตัวสร้าง Excel ไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่', true); return; }
+  const wb = XLSX.utils.book_new(), wkl = wkY(w.week), all = weeksIn(w), i = all.indexOf(w.week), pw = i > 0 ? all[i - 1] : null;
+  const head = 'สาขาพิษณุโลก (ST11) · สัปดาห์ ' + wkl + ' · ไฟล์ ' + w.file;
+  // 1 summary
+  const t = totOf(w, w.week), tp = pw ? totOf(w, pw) : null;
+  const aoa = [['สรุป Aging สาขาพิษณุโลก (ST11)'], [head], [],
+    ['ตัวชี้วัด', 'สัปดาห์นี้', pw ? 'สัปดาห์ก่อน (' + wk(pw) + ')' : 'สัปดาห์ก่อน', 'เปลี่ยนแปลง'],
+    ['มูลค่า Aging รวม (พันบาท)', t.amount_k, tp ? tp.amount_k : '', tp ? t.amount_k - tp.amount_k : ''],
+    ['จำนวน SKU', t.sku, tp ? tp.sku : '', tp ? t.sku - tp.sku : ''],
+    ['% ต่อมูลค่าสต็อก', t.pct / 100, tp ? tp.pct / 100 : '', tp ? (t.pct - tp.pct) / 100 : ''], [],
+    ['สถานะ', 'มูลค่า (พันบาท)', 'SKU', '% ของ Aging', 'เทียบสัปดาห์ก่อน (พันบาท)', 'Markdown ตามนโยบาย', 'ค่า Markdown โดยประมาณ (พันบาท)']];
+  ST.forEach(st => { const r = w.summary.status.find(x => x.week === w.week && x.status === st) || {amount_k: 0, sku: 0}; const p = pw ? stAmt(w, pw, st) : null;
+    aoa.push([st, r.amount_k, r.sku, t.amount_k ? r.amount_k / t.amount_k : 0, p == null ? '' : r.amount_k - p, MD[st] || '', MD[st] ? r.amount_k * MD[st] : '']); });
+  aoa.push([], ['แผนก'].concat(ST, ['รวม (พันบาท)', 'เทียบสัปดาห์ก่อน (พันบาท)']));
+  DIVS.forEach(dv => { const v = ST.map(st => divAmt(w, w.week, dv, st)), tot = d3.sum(v), p = pw ? d3.sum(ST, st => divAmt(w, pw, dv, st)) : null; aoa.push([dv].concat(v, [tot, p == null ? '' : tot - p])); });
+  const ws1 = XLSX.utils.aoa_to_sheet(aoa);
+  const fmt = (r, c, z) => { const a = XLSX.utils.encode_cell({r, c}); if (ws1[a] && ws1[a].t === 'n') ws1[a].z = z; };
+  [4].forEach(r => { fmt(r, 1, XF.k); fmt(r, 2, XF.k); fmt(r, 3, XF.ksg); }); [5].forEach(r => { fmt(r, 1, XF.int); fmt(r, 2, XF.int); fmt(r, 3, XF.dsg); });
+  [6].forEach(r => { fmt(r, 1, '0.00%'); fmt(r, 2, '0.00%'); fmt(r, 3, '+0.00%;-0.00%;0'); });
+  for (let r = 9; r < 14; r++) { fmt(r, 1, XF.k); fmt(r, 2, XF.int); fmt(r, 3, XF.pct); fmt(r, 4, XF.ksg); fmt(r, 5, '0%'); fmt(r, 6, XF.k); }
+  for (let r = 16; r < 19; r++) { for (let c = 1; c <= 6; c++) fmt(r, c, XF.k); fmt(r, 7, XF.ksg); }
+  ws1['!cols'] = [{wch: 26}, {wch: 15}, {wch: 17}, {wch: 14}, {wch: 22}, {wch: 18}, {wch: 26}, {wch: 22}];
+  XLSX.utils.book_append_sheet(wb, ws1, 'สรุป');
+  // 2 trend
+  const trend = all.map(x => ({week: x, t: totOf(w, x)}));
+  XLSX.utils.book_append_sheet(wb, xSheet('แนวโน้มรายสัปดาห์ (จาก Compare Summary)', head + ' · หน่วยพันบาท', [
+    {h: 'สัปดาห์', v: r => wkY(r.week), w: 14}].concat(ST.map(st => ({h: st + ' (พันบาท)', v: r => stAmt(w, r.week, st), f: 'k', w: 14})),
+    [{h: 'รวม (พันบาท)', v: r => r.t.amount_k, f: 'k', w: 13}, {h: 'SKU', v: r => r.t.sku, f: 'int'}, {h: '% ต่อสต็อก', v: r => r.t.pct / 100, f: 'pct', w: 10}],
+    DIVS.map(dv => ({h: dv + ' (พันบาท)', v: r => d3.sum(ST, st => divAmt(w, r.week, dv, st)), f: 'k', w: 15}))), trend), 'แนวโน้ม');
+  // 3 dept
+  const {prev, items} = itemsPrepared(w);
+  if (items.length) {
+    const drows = []; DIVS.forEach(dv => deptList(dv, items).forEach(d => { const rs = items.filter(r => r.division === dv && String(r.dept) === d); const pv = prev ? d3.sum(prev.items.filter(r => r.division === dv && String(r.dept) === d), r => r.amount) : null;
+      drows.push({dv, d, rs, tot: d3.sum(rs, r => r.amount), pv}); }));
+    XLSX.utils.book_append_sheet(wb, xSheet('มูลค่าแยกตามแผนกย่อย (จาก Stock LY)', head + ' · บาท ราคาทุน' + (prev ? ' · เทียบกับสัปดาห์ ' + wk(prev.week) : ''), [
+      {h: 'แผนก', v: r => r.dv, w: 11}, {h: 'แผนกย่อย', v: r => deptName(r.dv, r.d), w: 18}]
+      .concat(Object.keys(CODE).map(c => ({h: CODE[c], v: r => d3.sum(r.rs.filter(x => x.status === c), x => x.amount), f: 'int', w: 13})),
+      [{h: 'รวม (บาท)', v: r => r.tot, f: 'int', w: 13}, {h: 'SKU', v: r => r.rs.length, f: 'int'}, {h: 'เทียบสัปดาห์ก่อน (บาท)', v: r => r.pv == null ? null : r.tot - r.pv, f: 'dsg', w: 15},
+       {h: 'รายการใหม่ (SKU)', v: r => prev ? r.rs.filter(x => x.isNew).length : null, f: 'int', w: 11}]), drows), 'แผนกย่อย');
+  }
+  // 4 top30
+  XLSX.utils.book_append_sheet(wb, xSheet('Top 30 ทุกแผนก ทุกตาราง (จาก COMPARE ITEM)', head + ' · มูลค่ารวม = ช่อง Grand Total ในไฟล์ · ทุนต่อหน่วย = WAC จาก Stock LY', TOP_COLS, topPrepared(w)), 'Top 30');
+  // 5 items
+  if (items.length) {
+    XLSX.utils.book_append_sheet(wb, xSheet('รายการสินค้า Aging ทั้งหมด (จาก Stock LY) เรียงตามมูลค่า', head + ' · ' + n0(items.length) + ' รายการ · ' + n0(Math.round(d3.sum(items, r => r.amount))) + ' บาท', ITEM_COLS(!!prev), items), 'รายสินค้า');
+    if (prev) { const nw = items.filter(r => r.isNew); XLSX.utils.book_append_sheet(wb, xSheet('รายการใหม่ (ไม่อยู่ในสัปดาห์ ' + wk(prev.week) + ')', head + ' · ' + n0(nw.length) + ' รายการ · ' + n0(Math.round(d3.sum(nw, r => r.amount))) + ' บาท', ITEM_COLS(false), nw), 'รายการใหม่'); }
+    // 6 suppliers
+    const tot = d3.sum(items, r => r.amount);
+    const sups = d3.rollups(items, v => v, r => r.supplier).map(([sp, v]) => ({sp, v, amt: d3.sum(v, r => r.amount)})).sort((a, b) => b.amt - a.amt);
+    XLSX.utils.book_append_sheet(wb, xSheet('สรุปรายซัพพลายเออร์', head + ' · บาท ราคาทุน', [
+      {h: 'อันดับ', v: r => sups.indexOf(r) + 1, w: 7}, {h: 'ซัพพลายเออร์', v: r => r.sp, w: 36}, {h: 'SKU', v: r => r.v.length, f: 'int'}, {h: 'มูลค่ารวม (บาท)', v: r => r.amt, f: 'int', w: 14}, {h: '% ของทั้งหมด', v: r => r.amt / tot, f: 'pct', w: 11}]
+      .concat(Object.keys(CODE).map(c => ({h: CODE[c], v: r => d3.sum(r.v.filter(x => x.status === c), x => x.amount) || null, f: 'int', w: 12})),
+      [{h: 'แผนก', v: r => [...new Set(r.v.map(x => x.division))].join(', '), w: 22}, {h: 'SKU ไม่มีขายเดือนนี้', v: r => r.v.filter(x => !x.sales_mtd).length || null, f: 'int', w: 12},
+       {h: 'SKU ค้างสั่ง', v: r => r.v.filter(x => x.on_order > 0).length || null, f: 'int', w: 10}].concat(prev ? [{h: 'SKU ใหม่', v: r => r.v.filter(x => x.isNew).length || null, f: 'int', w: 9}] : [])), sups), 'ซัพพลายเออร์');
+  }
+  // 7 notes
+  const notes = [['คำอธิบายข้อมูล'], [head], [], ['หัวข้อ', 'คำอธิบาย'],
+    ['ชีท สรุป / แนวโน้ม', 'มาจากชีท Compare Summary หน่วยพันบาท ตรงกับตัวเลขที่ใช้รายงาน'],
+    ['ชีท แผนกย่อย / รายสินค้า / ซัพพลายเออร์', 'มาจากชีท Stock LY รายสินค้า ราคาทุน ยอดรวมอาจไม่เท่า Compare Summary พอดี เพราะดึงข้อมูลคนละช่วงเวลา'],
+    ['ชีท Top 30', 'มาจากชีท COMPARE ITEM ทั้ง 4 ตารางของแต่ละแผนก มูลค่ารวม = ช่อง Grand Total ในไฟล์'],
+    ['แผนกย่อย Fresh Food', '1 = Fruit & Vegetable, 2 = Butchery, 3 = Fish, 4 = Bakery, 5 = Dairy & Frozen · แผนกอื่นแสดงเป็นเลข Dept'],
+    ['ทุนต่อหน่วย', 'มูลค่ารวม ÷ จำนวน (WAC)'], ['ราคาขายต่อหน่วย', 'ราคาขายในไฟล์ รวม VAT'],
+    ['กำไร %', '(ราคาขาย − ทุน) ÷ ราคาขาย ยังไม่หัก VAT ส่วนลด หรือ Markdown สินค้าที่มี VAT จึงมีกำไรจริงต่ำกว่าที่แสดง ถ้าติดลบมาก อาจเป็นเพราะหน่วยทุนกับหน่วยขายไม่ตรงกัน'],
+    ['รายการใหม่ (รายสินค้า)', prev ? 'สินค้าที่ไม่อยู่ในไฟล์สัปดาห์ ' + wkY(prev.week) : 'ต้องมีสัปดาห์ก่อนเก็บไว้ใน Dashboard จึงจะคำนวณได้'],
+    ['ข้อควรระวัง Top 30', 'ในไฟล์ต้นทาง ตาราง Obsolete ของ Dry Food ช่อง Grand Total บางแถวเป็นตัวเลขที่พิมพ์ค้างไว้ ไม่เปลี่ยนตามสต็อก ควรตรวจสอบกับสต็อกล่าสุด × ราคาขาย'],
+    ['รายการใหม่ (Top 30)', 'สัปดาห์ก่อนสต็อกเป็น 0 และสัปดาห์นี้มีสต็อก'],
+    ['ค่า Markdown โดยประมาณ', 'มูลค่า × อัตรา Markdown ตามนโยบาย SM 014-001 (Critical 20%, Obsolete 40%, Full Provision 70%)'],
+    ['ตัวกรองในตาราง', 'ทุกชีทที่เป็นตารางเปิดตัวกรอง (Filter) ไว้ที่หัวคอลัมน์ คลิกลูกศรเพื่อกรองหรือเรียงลำดับได้'],
+    ['ส่งออกเมื่อ', new Date().toLocaleString('th-TH')]];
+  const wsn = XLSX.utils.aoa_to_sheet(notes); wsn['!cols'] = [{wch: 34}, {wch: 110}];
+  XLSX.utils.book_append_sheet(wb, wsn, 'คำอธิบาย');
+  xSave(wb, 'Aging_ST11_' + w.week + '.xlsx');
+  show('ส่งออกรายงาน Excel สัปดาห์ ' + wkl + ' แล้ว (' + wb.SheetNames.length + ' ชีท: ' + wb.SheetNames.join(', ') + ')');
+}
+function exportView(kind){
+  const w = W(); if (!w || typeof XLSX === 'undefined') return;
+  const head = 'สาขาพิษณุโลก (ST11) · สัปดาห์ ' + wkY(w.week);
+  const wb = XLSX.utils.book_new();
+  if (kind === 'tp') {
+    const lab = $('tp-div').value + ' · ' + $('tp-list').selectedOptions[0].text + (TDP ? ' · ' + deptName($('tp-div').value, TDP) : '') + (TNEW ? ' · เฉพาะรายการใหม่' : '') + ($('tp-q').value.trim() ? ' · ค้นหา "' + $('tp-q').value.trim() + '"' : '');
+    const rows = LAST_TP.map((r, i) => ({...r, rank: i + 1, dept: r.dept == null ? '' : String(r.dept)}));
+    XLSX.utils.book_append_sheet(wb, xSheet('Top 30 · ' + lab, head + ' · ' + rows.length + ' รายการ · เรียงตามที่เลือกบนหน้าจอ', TOP_COLS.filter(c => c.h !== 'แผนก' && c.h !== 'ตาราง Top 30').map(c => c.h === 'อันดับ' ? {...c, h: 'ลำดับ'} : c), rows), 'Top 30');
+    xSave(wb, 'Aging_ST11_Top30_' + w.week + '.xlsx');
+  } else {
+    XLSX.utils.book_append_sheet(wb, xSheet(LAST_SP_T, head + ' · ' + n0(LAST_SP.length) + ' รายการ · ' + n0(Math.round(d3.sum(LAST_SP, r => r.amount))) + ' บาท · เรียงตามที่เลือกบนหน้าจอ', ITEM_COLS(true), LAST_SP), 'รายการสินค้า');
+    xSave(wb, 'Aging_ST11_Items_' + w.week + '.xlsx');
+  }
+  show('ส่งออกตารางตามตัวกรองที่เลือกแล้ว');
+}
+$('xls').addEventListener('click', () => { try { exportAll(); } catch (e) { show('ส่งออกไม่สำเร็จ: ' + e.message, true); } });
+$('tp-xls').addEventListener('click', () => { try { exportView('tp'); } catch (e) { show('ส่งออกไม่สำเร็จ: ' + e.message, true); } });
+$('sp-xls').addEventListener('click', () => { try { exportView('sp'); } catch (e) { show('ส่งออกไม่สำเร็จ: ' + e.message, true); } });
 
 /* ---------- suppliers ---------- */
 function drawSup(){
@@ -619,7 +782,8 @@ function drawSup(){
   $('sp-items-n').textContent = n0(rs.length) + ' รายการ · มูลค่ารวม ' + n0(Math.round(d3.sum(rs, r => r.amount))) + ' บาท' + (pset && !SNEW ? ' · รายการใหม่ ' + n0(nwS.length) + ' รายการ มูลค่า ' + n0(Math.round(d3.sum(nwS, r => r.amount))) + ' บาท' : '') + (rs.length > lim ? ' · แสดง ' + lim + ' รายการแรก (เลือกสถานะหรือซัพพลายเออร์เพื่อดูทั้งหมด)' : '');
   const tb = $('tb-sp'); tb.replaceChildren();
   markSort('t-sp', SP);
-  rs.map(r => { const ucost = r.qty ? r.amount / r.qty : r.wac || null; return {...r, ucost, gp: gpOf(ucost, r.sp), dept: r.dept === '' ? null : +r.dept, deptRaw: r.dept}; }).sort(sorter(SP)).slice(0, lim).forEach(r => { const tr = tb.insertRow(); td(tr, r.item_no); nameTd(tr, r.item, isNewS(r)); td(tr, r.supplier.replace('บมจ.', '').replace('บจ.', '').trim(), 'nm'); td(tr, r.division); td(tr, deptName(r.division, r.deptRaw)); pill(tr, r.status); td(tr, n0(r.qty), 'r'); barTd(tr, r.amount, mxS); td(tr, r.ucost == null ? '' : n2(r.ucost), 'r'); td(tr, r.sp == null ? '' : n2(r.sp), 'r'); gpTd(tr, r.ucost, r.sp); td(tr, n0(r.aging_day), 'r'); td(tr, n0(r.sales_mtd), 'r' + (!r.sales_mtd ? ' hot bad' : '')); td(tr, r.on_order ? n0(r.on_order) : '', 'r' + (r.on_order ? ' hot bad' : '')); });
+  const SPV = rs.map(r => { const ucost = r.qty ? r.amount / r.qty : r.wac || null; return {...r, ucost, gp: gpOf(ucost, r.sp), dept: r.dept === '' ? null : +r.dept, deptRaw: r.dept}; }).sort(sorter(SP)); LAST_SP = SPV.map(r => ({...r, isNew: isNewS(r)})); LAST_SP_T = $('sp-items-h').textContent;
+  SPV.slice(0, lim).forEach(r => { const tr = tb.insertRow(); td(tr, r.item_no); nameTd(tr, r.item, isNewS(r)); td(tr, r.supplier.replace('บมจ.', '').replace('บจ.', '').trim(), 'nm'); td(tr, r.division); td(tr, deptName(r.division, r.deptRaw)); pill(tr, r.status); td(tr, n0(r.qty), 'r'); barTd(tr, r.amount, mxS); td(tr, r.ucost == null ? '' : n2(r.ucost), 'r'); td(tr, r.sp == null ? '' : n2(r.sp), 'r'); gpTd(tr, r.ucost, r.sp); td(tr, n0(r.aging_day), 'r'); td(tr, n0(r.sales_mtd), 'r' + (!r.sales_mtd ? ' hot bad' : '')); td(tr, r.on_order ? n0(r.on_order) : '', 'r' + (r.on_order ? ' hot bad' : '')); });
   const to = $('tb-oo'); to.replaceChildren();
   oo.slice().sort((a, b) => b.amount - a.amount).forEach(r => { const tr = to.insertRow(); td(tr, r.item_no); nameTd(tr, r.item, isNewS(r)); td(tr, r.division); pill(tr, r.status); td(tr, n0(Math.round(r.amount)), 'r'); td(tr, n0(r.on_order), 'r hot bad'); td(tr, n0(r.sales_mtd), 'r'); });
 }
