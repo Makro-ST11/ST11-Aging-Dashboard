@@ -104,7 +104,7 @@ details{font-size:13px;color:var(--soft)}
       <select id="week" aria-label="เลือกสัปดาห์"></select>
       <button class="btn ghost" id="del">ลบสัปดาห์นี้</button>
       <button class="btn" id="xls">ส่งออก Excel (รายงานครบ)</button>
-      <button class="btn ghost" id="exp">บันทึกเป็นไฟล์สำหรับส่งต่อ</button>
+      <button class="btn" id="exp" title="บันทึก Dashboard พร้อมข้อมูลทุกสัปดาห์ที่อัปโหลดไว้ เป็นไฟล์ HTML ไฟล์เดียว เปิดดูได้ด้วยการดับเบิลคลิก">บันทึกเป็น HTML ลงเครื่อง</button>
     </div>
   </header>
   <div id="msg" class="msg" hidden></div>
@@ -377,14 +377,13 @@ $('del').addEventListener('click', () => {
   if ($('del').dataset.confirm !== w.week) { $('del').dataset.confirm = w.week; $('del').textContent = 'กดอีกครั้งเพื่อยืนยันลบ ' + wk(w.week); setTimeout(() => { $('del').dataset.confirm = ''; $('del').textContent = 'ลบสัปดาห์นี้'; }, 4000); return; }
   weeks = weeks.filter(x => x.week !== w.week); saveStore(); $('del').dataset.confirm = ''; $('del').textContent = 'ลบสัปดาห์นี้'; cur = null; fillWeeks(); render(); show('ลบสัปดาห์ ' + wkY(w.week) + ' แล้ว');
 });
-$('exp').addEventListener('click', () => {
+$('exp').addEventListener('click', async () => {
   try {
     const data = JSON.stringify(weeks).replace(/</g, '\\u003c');
     const html = SRC.replace(/<script id="embedded" type="application\/json">[\s\S]*?<\/script>/, '<script id="embedded" type="application/json">' + data + '<\/script>');
-    const blob = new Blob([html], {type: 'text/html'});
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Aging_Dashboard_ST11_' + (weeks[0] ? weeks[0].week : 'data') + '.html';
-    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-    show('สร้างไฟล์แล้ว ถ้าไม่มีไฟล์ดาวน์โหลด ให้เปิด Dashboard นี้จากไฟล์ในเครื่องแล้วลองกดอีกครั้ง');
+    const name = 'Aging_Dashboard_ST11_' + (weeks[0] ? weeks[0].week : 'data') + '.html';
+    const h = await saveBlob(new Blob([html], {type: 'text/html'}), name, 'หน้าเว็บ HTML', 'text/html', '.html');
+    if (h !== 'cancel') show(savedMsg(h, 'Dashboard เป็นไฟล์ HTML ') + ' · มีข้อมูล ' + weeks.length + ' สัปดาห์ (' + weeks.map(w => wk(w.week)).join(', ') + ') ดับเบิลคลิกไฟล์เพื่อเปิดดูได้เลย ต้องต่ออินเทอร์เน็ตเพื่อโหลดกราฟ');
   } catch (e) { show('สร้างไฟล์ไม่สำเร็จ: ' + e.message, true); }
 });
 document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
@@ -582,7 +581,19 @@ function xSheet(title, sub, cols, rows, extra){
   if (rows.length) ws['!autofilter'] = {ref: XLSX.utils.encode_range({s: {r: 3, c: 0}, e: {r: 3 + rows.length, c: cols.length - 1}})};
   return ws;
 }
-function xSave(wb, name){ XLSX.writeFile(wb, name, {compression: true}); }
+async function saveBlob(blob, name, desc, mime, ext){
+  if (window.showSaveFilePicker) {
+    try {
+      const h = await window.showSaveFilePicker({suggestedName: name, startIn: 'desktop', types: [{description: desc, accept: {[mime]: [ext]}}]});
+      const w = await h.createWritable(); await w.write(blob); await w.close(); return 'picked';
+    } catch (e) { if (e && e.name === 'AbortError') return 'cancel'; }
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); return 'download';
+}
+const XMIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+function xSave(wb, name){ return saveBlob(new Blob([XLSX.write(wb, {bookType: 'xlsx', type: 'array', compression: true})], {type: XMIME}), name, 'ไฟล์ Excel', XMIME, '.xlsx'); }
+const savedMsg = (how, what) => how === 'cancel' ? '' : how === 'picked' ? 'บันทึก ' + what + 'แล้ว' : 'ดาวน์โหลด ' + what + 'แล้ว ไฟล์อยู่ในโฟลเดอร์ Downloads';
 const deptOf = r => deptName(r.division, r.dept === null || r.dept === undefined ? '' : String(r.dept));
 const ITEM_COLS = (newCol) => [
   {h: 'รหัส', v: r => +r.item_no || r.item_no, w: 9},
@@ -705,8 +716,7 @@ function exportAll(){
     ['ส่งออกเมื่อ', new Date().toLocaleString('th-TH')]];
   const wsn = XLSX.utils.aoa_to_sheet(notes); wsn['!cols'] = [{wch: 34}, {wch: 110}];
   XLSX.utils.book_append_sheet(wb, wsn, 'คำอธิบาย');
-  xSave(wb, 'Aging_ST11_' + w.week + '.xlsx');
-  show('ส่งออกรายงาน Excel สัปดาห์ ' + wkl + ' แล้ว (' + wb.SheetNames.length + ' ชีท: ' + wb.SheetNames.join(', ') + ')');
+  xSave(wb, 'Aging_ST11_' + w.week + '.xlsx').then(h => { const m = savedMsg(h, 'รายงาน Excel สัปดาห์ ' + wkl + ' (' + wb.SheetNames.length + ' ชีท) '); if (m) show(m); });
 }
 function exportView(kind){
   const w = W(); if (!w || typeof XLSX === 'undefined') return;
@@ -716,12 +726,11 @@ function exportView(kind){
     const lab = $('tp-div').value + ' · ' + $('tp-list').selectedOptions[0].text + (TDP ? ' · ' + deptName($('tp-div').value, TDP) : '') + (TNEW ? ' · เฉพาะรายการใหม่' : '') + ($('tp-q').value.trim() ? ' · ค้นหา "' + $('tp-q').value.trim() + '"' : '');
     const rows = LAST_TP.map((r, i) => ({...r, rank: i + 1, dept: r.dept == null ? '' : String(r.dept)}));
     XLSX.utils.book_append_sheet(wb, xSheet('Top 30 · ' + lab, head + ' · ' + rows.length + ' รายการ · เรียงตามที่เลือกบนหน้าจอ', TOP_COLS.filter(c => c.h !== 'แผนก' && c.h !== 'ตาราง Top 30').map(c => c.h === 'อันดับ' ? {...c, h: 'ลำดับ'} : c), rows), 'Top 30');
-    xSave(wb, 'Aging_ST11_Top30_' + w.week + '.xlsx');
+    return xSave(wb, 'Aging_ST11_Top30_' + w.week + '.xlsx').then(h => { const m = savedMsg(h, 'ตาราง Top 30 '); if (m) show(m); });
   } else {
     XLSX.utils.book_append_sheet(wb, xSheet(LAST_SP_T, head + ' · ' + n0(LAST_SP.length) + ' รายการ · ' + n0(Math.round(d3.sum(LAST_SP, r => r.amount))) + ' บาท · เรียงตามที่เลือกบนหน้าจอ', ITEM_COLS(true), LAST_SP), 'รายการสินค้า');
-    xSave(wb, 'Aging_ST11_Items_' + w.week + '.xlsx');
+    return xSave(wb, 'Aging_ST11_Items_' + w.week + '.xlsx').then(h => { const m = savedMsg(h, 'ตารางรายการสินค้า '); if (m) show(m); });
   }
-  show('ส่งออกตารางตามตัวกรองที่เลือกแล้ว');
 }
 $('xls').addEventListener('click', () => { try { exportAll(); } catch (e) { show('ส่งออกไม่สำเร็จ: ' + e.message, true); } });
 $('tp-xls').addEventListener('click', () => { try { exportView('tp'); } catch (e) { show('ส่งออกไม่สำเร็จ: ' + e.message, true); } });
